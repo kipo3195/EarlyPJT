@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+	<link rel="stylesheet" href="/css/early.css" > <!-- spring boot의 리소스 기본경로는 src/main/resoureces/static -->
+</head>
+<body>
+	<div class="join1">Early !</div>
+	
+	<div>
+		<form action="/joinRequest" method="post">
+			id : <input type="text" placeholder="e-mail 형식 입력" id="username">
+			<br/>
+			Password : <input type="password" placeholder="비밀번호 입력" id="password">
+			<br/>
+			Password Check : <input type="password" placeholder="비밀번호 입력 확인" id="passwordCheck">
+			<br/>
+			Name : <input type="text" placeholder="이름" id="name">
+			<br/>
+			Phone Number : <input type="text" placeholder="휴대폰 번호 입력 '-' 생략 ex)01000000000" id="phoneNumber">
+			<br/>
+			Birth Day : <input type="text" placeholder="생년월일 입력 8자리 ex)20230913" id="BirthDay">
+			<br/>
+			<input type="button" value="회원가입">
+		</form>
+	</div>
+	
+</body>
+</html>
