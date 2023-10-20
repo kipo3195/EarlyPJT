@@ -7,23 +7,42 @@
 <body>
 	<div class="join1">Early !</div>
 	
+	<script>
+		function checkPassword(){
+		const password = document.getElementById("password").value;
+		const passwordCheck = document.getElementById("passwordCheck").value;
+		
+		if(password != passwordCheck){
+			alert("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+			document.getElementById("password").value = null;
+			document.getElementById("passwordCheck").value = null;
+		}else{
+			var form = document.requestForm;
+			form.submit();
+		}
+		
+		}
+	</script>
+	
 	<div>
-		<form action="/joinRequest" method="post">
-			id : <input type="text" placeholder="e-mail 형식 입력" id="username">
+		<form action="/joinRequest" method="post" name="requestForm">
+			id : <input type="email" placeholder="e-mail 형식 입력" name="username" id="username">
 			<br/>
-			Password : <input type="password" placeholder="비밀번호 입력" id="password">
+			Password : <input type="password" placeholder="비밀번호 입력" name="password" id="password">
 			<br/>
-			Password Check : <input type="password" placeholder="비밀번호 입력 확인" id="passwordCheck">
+			Password Check : <input type="password" placeholder="비밀번호 입력 확인" name="passwordCheck" id="passwordCheck">
 			<br/>
-			Name : <input type="text" placeholder="이름" id="name">
+			Name : <input type="text" placeholder="이름" name="name">
 			<br/>
-			Phone Number : <input type="text" placeholder="휴대폰 번호 입력 '-' 생략 ex)01000000000" id="phoneNumber">
+			Phone Number : <input type="text" placeholder="휴대폰 번호 입력 '-' 생략 ex)01000000000" name="phoneNumber">
 			<br/>
-			Birth Day : <input type="text" placeholder="생년월일 입력 8자리 ex)20230913" id="BirthDay">
+			Birth Day : <input type="text" placeholder="생년월일 입력 8자리 ex)20230913" name="birthDay">
 			<br/>
-			<input type="button" value="회원가입">
+			<input type="button" value="회원가입" onclick="checkPassword()">
 		</form>
 	</div>
-	
+	<div>
+		<a href="/">뒤로</a>
+	</div>	
 </body>
 </html>

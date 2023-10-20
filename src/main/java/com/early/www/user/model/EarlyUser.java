@@ -16,6 +16,9 @@ public class EarlyUser {
 	private long id;
 	private String username;
 	private String password;
+	private String name;
+	private String phoneNumber;
+	private String birthDay;
 	private String roles; // USER, ADMIN을 사용, Role 객체를 만들어도 됨.  
 
 }
