@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.early.www.repository.UserRepository;
+import com.early.www.repository.CommonRepository;
 import com.early.www.user.model.EarlyUser;
 
 
@@ -12,7 +12,7 @@ import com.early.www.user.model.EarlyUser;
 public class CommonServiceImpl implements CommonService {
 
 	@Autowired
-	UserRepository userRepository;
+	CommonRepository commonRepository;
 	
 	@Autowired
 	BCryptPasswordEncoder passwordEncoder;
@@ -22,18 +22,37 @@ public class CommonServiceImpl implements CommonService {
 		String encodedPw = passwordEncoder.encode(user.getPassword());
 		System.out.println("encodedPw : " + encodedPw);
 		user.setPassword(encodedPw);
-		userRepository.save(user);
+		user.setRoles("ROLE_USER");
+		commonRepository.save(user);
 	
 	}
 
 	@Override
 	public boolean existsUsername(String username) {
 		
-		EarlyUser earlyUser = userRepository.findByusername(username);
+		EarlyUser earlyUser = commonRepository.findByusername(username);
 		System.out.println("EalryUser : " + earlyUser);
 		
 		if(earlyUser != null) {
 			return true;
+		}else {
+			return false;
+		}
+	}
+
+	@Override
+	public boolean login(String username, String password) {
+		
+		EarlyUser earlyUser = commonRepository.findByusername(username);
+		
+		System.out.println(earlyUser);
+		
+		if(earlyUser != null ) {
+			if(passwordEncoder.matches(password, earlyUser.getPassword())) {
+				return true; // 입력한 비밀번호와 저장소의 비밀번호가 일치
+			} else {
+				return false;
+			}	
 		}else {
 			return false;
 		}

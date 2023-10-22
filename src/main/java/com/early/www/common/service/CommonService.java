@@ -8,4 +8,6 @@ public interface CommonService {
 	
 	public abstract boolean existsUsername(String userId);
 
+	public abstract boolean login(String username, String password);
+
 }

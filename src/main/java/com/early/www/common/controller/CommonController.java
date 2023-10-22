@@ -1,5 +1,7 @@
 package com.early.www.common.controller;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -34,7 +36,6 @@ public class CommonController {
 		
 	}
 	
-	
 	/************************** 
 	 * 
 	 * 회원가입 & 로그인 관련 처리 
@@ -50,15 +51,6 @@ public class CommonController {
 		return mov;
 	}
 	
-	// 로그인 요청
-	@PostMapping("/loginRequest")
-	public String loginRequest(@RequestBody EarlyUser user) {
-		
-		
-		System.out.println("/loginRequest 호출 !");
-		
-		return "/main";
-	}
 	
 	// 회원가입 페이지 요청
 	@GetMapping("join")
@@ -88,7 +80,7 @@ public class CommonController {
 		
 		boolean result = service.existsUsername(username);
 
-		System.out.println("CommonController result : "+ result);
+		System.out.println("CommonController idDupCheck result : "+ result);
 		
 		if(result) {
 			return "true";
@@ -97,5 +89,13 @@ public class CommonController {
 		}
 	}
 	
+	@GetMapping("/user/main")
+	public ModelAndView userMain() {
+		
+		System.out.println("usermain page 호출 !");
+		ModelAndView mov = new ModelAndView("/user/usermain");
+		
+		return mov;
+	}
 	
 }
