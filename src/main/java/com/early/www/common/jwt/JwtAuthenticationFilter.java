@@ -2,12 +2,16 @@ package com.early.www.common.jwt;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -33,7 +37,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 		public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
 				throws AuthenticationException {
 			
-			System.out.println("JwtAuthenticationFilter 로그인 시도중");
+			System.out.println("[JwtAuthenticationFilter] 로그인 시도 요청");
 			
 			// 1.username, password 받기
 			try {
@@ -51,14 +55,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 				System.out.println(om);
 				EarlyUser earlyUser = om.readValue(request.getInputStream(), EarlyUser.class);
 				
-				System.out.println("ObjectMapper earlyUser : "+earlyUser);
-				
 				// 토큰생성 
 				UsernamePasswordAuthenticationToken authenticationToken 
 						= new UsernamePasswordAuthenticationToken(earlyUser.getUsername(), earlyUser.getPassword());
-				
-				
-				System.out.println("여기 1 earlyUser.getUsername() : "+ earlyUser.getUsername() + "earlyUser.getPassword() : "+ earlyUser.getPassword());
 				// PrincipalDetailsService의 loadUserByUsername가 실행 = 실제 로그인 시도해서 만드는 Authentication
 				// DB에 있는 username, password가 일치 authentication != null
 				Authentication authentication = authenticationManager.authenticate(authenticationToken);
@@ -70,7 +69,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 					PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
 					
 					// 출력이된다는건 로그인이 되었다는 의미 
-					System.out.println("로그인 완료됨 : " + principalDetails.getEarlyUser().getUsername());
+					System.out.println("[JwtAuthenticationFilter] username : " + principalDetails.getEarlyUser().getUsername());
 					
 					// 세션에 저장됨. 굳이 jwt 토큰을 사용하는데 세션을 만들이유가 없다. 다만 권한 처리 때문에 session에 넣어준다.
 					return authentication;
@@ -84,7 +83,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 		@Override
 		protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
 				Authentication authResult) throws IOException, ServletException {
-			System.out.println("successfulAuthentication 실행됨 : 인증이 완료되었다는 의미 ");
+			System.out.println("[JwtAuthenticationFilter] successfulAuthentication 인증완료 ");
 			
 			PrincipalDetails principalDetails = (PrincipalDetails) authResult.getPrincipal();
 			
@@ -105,9 +104,18 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
 		@Override
 		protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
-				AuthenticationException failed) throws IOException, ServletException {
+				AuthenticationException failed ) throws IOException, ServletException {
 			super.unsuccessfulAuthentication(request, response, failed);
-			System.out.println("계정정보가 DB에 존재하지 않는 경우 ");
+			System.out.println("[JwtAuthenticationFilter] unsuccessfulAuthentication 계정 정보 존재하지 않음 ");
+			
+//			response.setStatus(HttpStatus.UNAUTHORIZED.value());
+//	        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+//
+//	        Map<String, Object> body = new LinkedHashMap<>();
+//	        body.put("code", HttpStatus.UNAUTHORIZED.value());
+//	        body.put("error", failed.getMessage());
+//
+//	        new ObjectMapper().writeValue(response.getOutputStream(), body);
 		}
 	
 	

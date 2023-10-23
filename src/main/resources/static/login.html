@@ -11,11 +11,11 @@
 			
 			const username = $("#username").val();
 			const password = $("#password").val();
-			const token = $("#token").val();
+			//const token = $("#token").val();
 			
 			console.log(username);
 			console.log(password);
-			console.log(token);
+		//	console.log(token);
 			
 			if(username === ''){
 				alert("사용자 id를 입력하세요.")
@@ -54,22 +54,16 @@
 						var token = result.token;
 						console.log(token);
 						if(flag === "success"){
+							
 							alert("로그인 성공");
-							// 여기서 다시 들어가야하는지 ? 
-								$.ajax({
-									type : "get",
-									url : "/user/main",
-									headers: {'Authorization': token},
-									dataType:"text",
-									data : {
-									},
-									success : function(data){
-										location.href ='/user/main';
-									}
-								});
+							location.href ="/";
+							
 						}else{
 							alert("로그인 실패");
 						}
+					},
+					error : function(result){
+						alert("로그인 실패 ! 입력하신 정보를 확인하세요.");
 					}
 				});
 				
@@ -84,7 +78,7 @@
 <body>
 		<div class="main1">Early</div>
 	<div>
-		<form method="post" name="requestForm">
+		<form method="post" name="requestForm" action="/login">
 			<input type="text" placeholder="계정" id="username" name = "username">
 			<br/>
 			<input type="password" placeholder="비밀번호" id="password" name="password">

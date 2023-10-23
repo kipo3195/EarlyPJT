@@ -1,5 +1,6 @@
 package com.early.www.common.controller;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.json.simple.JSONObject;
@@ -28,9 +29,11 @@ public class CommonController {
 	 *************************** */
 	
 	@GetMapping("/")
-	public ModelAndView main() {
+	public ModelAndView main(HttpServletRequest request,HttpServletResponse response) {
 		
 		ModelAndView mov = new ModelAndView("/main"); 
+		
+		System.out.println(request.getHeader("Authorization"));
 		
 		return mov; 
 		

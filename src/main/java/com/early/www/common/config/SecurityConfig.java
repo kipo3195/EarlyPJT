@@ -38,6 +38,7 @@ public class SecurityConfig {
 		return new BCryptPasswordEncoder();
 	}
 
+	
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
 		
@@ -51,11 +52,9 @@ public class SecurityConfig {
 		.addFilter(new JwtAuthorizationFilter(authenticationManager(authenticationConfiguration), commonRepository))
 		
 		.authorizeRequests()	// 시큐리티 처리에 HttpServletRequest를 이용한다는 것을 의미함.
-		
 		.antMatchers("/user/**")
 		.access("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')")
-		
-		.anyRequest().permitAll(); // 다른 요청은 권한 없이 들어갈 수 있도록 처리함 
+		.anyRequest().permitAll(); // 다른 요청은 권한 없이 들어갈 수 있도록 처리함
 		
 		return http.build();
 	}

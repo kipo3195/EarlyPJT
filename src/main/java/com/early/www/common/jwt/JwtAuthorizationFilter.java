@@ -58,7 +58,6 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 			jwtHeader = request.getHeader("Authorization");
 			System.out.println("jwtHeader : "+ jwtHeader);
 		}
-		
 		// 유효성 검사
 		if(jwtHeader == null || !jwtHeader.startsWith("Bearer")) {
 			chain.doFilter(request, response);
@@ -84,6 +83,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 			// 권한은 알려줘야함. principalDetails.getAuthorities()
 			Authentication authentication = new UsernamePasswordAuthenticationToken(principalDetails, null, principalDetails.getAuthorities());
 			System.out.println("authentication : "+authentication);
+			System.out.println(" principalDetails.getAuthorities() : " +  principalDetails.getAuthorities());
 			// security session 공간에 강제로 접근하여 authentication 객체 저장
 			SecurityContextHolder.getContext().setAuthentication(authentication);
 			System.out.println("완료 ! ");
