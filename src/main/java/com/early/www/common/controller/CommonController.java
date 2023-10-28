@@ -33,8 +33,6 @@ public class CommonController {
 		
 		ModelAndView mov = new ModelAndView("/main"); 
 		
-		System.out.println(request.getHeader("Authorization"));
-		
 		return mov; 
 		
 	}
@@ -46,20 +44,20 @@ public class CommonController {
 	 ************************** */
 
 	// 로그인 페이지 요청
-	@GetMapping("/login")
+	@GetMapping("/loginPage")
 	public ModelAndView login() {
 
-		ModelAndView mov = new ModelAndView("/login"); 
+		ModelAndView mov = new ModelAndView("/loginPage"); 
 		
 		return mov;
 	}
 	
 	
 	// 회원가입 페이지 요청
-	@GetMapping("join")
+	@GetMapping("/joinPage")
 	public ModelAndView join() {
 		
-		ModelAndView mov = new ModelAndView("/join");
+		ModelAndView mov = new ModelAndView("/joinPage");
 		
 		return mov;
 	}
@@ -92,13 +90,5 @@ public class CommonController {
 		}
 	}
 	
-	@GetMapping("/user/main")
-	public ModelAndView userMain() {
-		
-		System.out.println("usermain page 호출 !");
-		ModelAndView mov = new ModelAndView("/user/usermain");
-		
-		return mov;
-	}
 	
 }

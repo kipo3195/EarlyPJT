@@ -4,9 +4,11 @@ import java.io.IOException;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -45,7 +47,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 		// 그렇기 때문에 chain.doFilter(request, response) 해버려서 security session에 set하지 못함.  
 		// so, 주석 처리 
 	
-		System.out.println("인증이나 권한이 필요한 주소 요청이 됨.");
+		System.out.println("[JwtAuthorizationFilter] 인증이나 권한이 필요한 주소 요청이 됨.");
 		// 사실 인증, 권한이 필요한 주소 뿐아니라 모든 url 요청시 해당 메소드가 호출된다. 
 		// doFilterInternal 내부 로직을 봤을때 header에 JWT 토큰이 있는지 없는지 판단하고 
 		// 없는경우 (로그인 X) 다음 Chain으로 넘겨주기만 하면 될 것이고,
@@ -60,6 +62,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 		}
 		// 유효성 검사
 		if(jwtHeader == null || !jwtHeader.startsWith("Bearer")) {
+			response.addHeader("error_code", "403");
 			chain.doFilter(request, response);
 			return;
 		}
@@ -68,7 +71,6 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 		//String jwtToken = request.getHeader("Authorization").replace("Bearer ", "");
 		//String jwtToken = response.getHeader("Authorization").replace("Bearer ", "");
 		String jwtToken = jwtHeader.replace("Bearer ", "");
-	
 		String username = JWT.require(Algorithm.HMAC512("early")).build().verify(jwtToken).getClaim("username").asString();
 
 		// 서명이 정상적
@@ -82,11 +84,9 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 			// username이 null이 아니라는 것은 정상적으로 인증이되었다는 것이므로 password자리에 null
 			// 권한은 알려줘야함. principalDetails.getAuthorities()
 			Authentication authentication = new UsernamePasswordAuthenticationToken(principalDetails, null, principalDetails.getAuthorities());
-			System.out.println("authentication : "+authentication);
 			System.out.println(" principalDetails.getAuthorities() : " +  principalDetails.getAuthorities());
 			// security session 공간에 강제로 접근하여 authentication 객체 저장
 			SecurityContextHolder.getContext().setAuthentication(authentication);
-			System.out.println("완료 ! ");
 			
 		}
 		chain.doFilter(request, response);

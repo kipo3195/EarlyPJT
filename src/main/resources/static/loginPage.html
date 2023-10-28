@@ -56,7 +56,8 @@
 						if(flag === "success"){
 							
 							alert("로그인 성공");
-							location.href ="/";
+							setCookie("jwt",token,1);
+							location.href="/";
 							
 						}else{
 							alert("로그인 실패");
@@ -70,6 +71,12 @@
 			}
 		}
 	
+		// JWT cookie 저장
+		var setCookie = function(name, value, exp){
+			var date = new Date();
+			date.setTime(date.getTime() + exp*60*1000);
+			document.cookie = name + '=' + value + ';expires=' + date.toUTCString() + ';path=/';
+		}
 	
 	</script>
 	

@@ -20,6 +20,7 @@ public class CorsConfig {
 		config.addAllowedMethod("*"); // 모든 http method의 응답 허용  
 		source.registerCorsConfiguration("/api/**", config); 
 
+		
 		return new CorsFilter(source);
 		
 	}

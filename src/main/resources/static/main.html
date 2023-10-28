@@ -3,14 +3,60 @@
 <head>
 <meta charset="UTF-8">
 	<link rel="stylesheet" href="/css/early.css" > <!-- spring boot의 리소스 기본경로는 src/main/resoureces/static -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+	<script>
+	
+	function goUserMain(){
+		var jwt = getCookie('jwt');
+		if(jwt != null){
+			$.ajax({
+				type:"get",
+				url:"/user/main",
+				dataType:"json",
+				beforeSend: function(xhr){
+					xhr.setRequestHeader("Authorization",jwt);
+				},
+				success : function(result){
+					console.log(result);
+					location.href="/user/mainPage";
+				},
+				error : function(result){
+					console.log(result);
+					alert("실패");
+				}
+			});
+		}else{
+			alert("접속 시간이 경과하여 로그인 페이지로 이동합니다.");
+			location.href="/loginPage";
+		}
+	}
+	
+	function getCookie(name) {
+	    var nameEQ = name + "=";
+	    var ca = document.cookie.split(';');
+	    for(var i=0;i < ca.length;i++) {
+	        var c = ca[i];
+	        while (c.charAt(0)==' ') c = c.substring(1,c.length);
+	        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+	    }
+	    return null;
+	}
+
+
+	</script>
 </head>
 <body>
 
-	메인페이지입니다.
-	<br/>
-	<a href="/join">회원가입 바로가기</a>
-	<a href="/login">로그인 바로가기</a>
+	<h2>메인페이지입니다.</h2>
 	
+	<br/>
+	<div>
+	<a href="/joinPage">회원가입 바로가기</a>
+	<a href="/loginPage">로그인 바로가기</a>
+	</div>
+	<div>
+	<input type="button" value="사용자 메인이동" onclick="goUserMain()">
+	</div>
 	
 </body>
 </html>

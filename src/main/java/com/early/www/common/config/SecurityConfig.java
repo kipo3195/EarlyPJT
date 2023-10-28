@@ -50,10 +50,10 @@ public class SecurityConfig {
 		.formLogin().disable()
 		.addFilter(new JwtAuthenticationFilter(authenticationManager(authenticationConfiguration)))
 		.addFilter(new JwtAuthorizationFilter(authenticationManager(authenticationConfiguration), commonRepository))
-		
+		.requestMatchers().antMatchers("/user/**","/login").and() // 특정 URL에만 Filter를 태우도록 처리함. (jwt)
 		.authorizeRequests()	// 시큐리티 처리에 HttpServletRequest를 이용한다는 것을 의미함.
-		.antMatchers("/user/**")
-		.access("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')")
+//		.antMatchers("/user/**") 
+//		.hasAnyRole("ROLE_USER","ROLE_ADMIN") 현재의 프로젝트에서는 ROLE을 기반으로하는 것이 아닌 jwt 기반으로 처리함.
 		.anyRequest().permitAll(); // 다른 요청은 권한 없이 들어갈 수 있도록 처리함
 		
 		return http.build();

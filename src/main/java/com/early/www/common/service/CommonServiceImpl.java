@@ -20,7 +20,6 @@ public class CommonServiceImpl implements CommonService {
 	@Override
 	public void userJoin(EarlyUser user) {
 		String encodedPw = passwordEncoder.encode(user.getPassword());
-		System.out.println("encodedPw : " + encodedPw);
 		user.setPassword(encodedPw);
 		user.setRoles("ROLE_USER");
 		commonRepository.save(user);
@@ -31,7 +30,6 @@ public class CommonServiceImpl implements CommonService {
 	public boolean existsUsername(String username) {
 		
 		EarlyUser earlyUser = commonRepository.findByusername(username);
-		System.out.println("EalryUser : " + earlyUser);
 		
 		if(earlyUser != null) {
 			return true;
