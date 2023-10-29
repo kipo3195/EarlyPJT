@@ -20,7 +20,7 @@ public class PrincipalDetails implements UserDetails{
 	public PrincipalDetails (EarlyUser earlyUser){
 		this.earlyUser = earlyUser;
 	}
-
+ 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		Collection<GrantedAuthority> authorities = new ArrayList<>();	
@@ -32,6 +32,20 @@ public class PrincipalDetails implements UserDetails{
 		return authorities;
 	}
 
+	//해당 user의 권한을 리턴하는 곳
+//	@Override
+//	public Collection<? extends GrantedAuthority> getAuthorities() {
+//		Collection<GrantedAuthority> collect = new ArrayList<>();
+//		collect.add(new GrantedAuthority() {
+//			private static final long serialVersionUID = 1111639807443687288L;
+//			@Override
+//			public String getAuthority() {
+//				return earlyUser.getRoles();
+//			}
+//		});
+//		return collect;
+//	}
+	
 	@Override
 	public String getPassword() {
 		return earlyUser.getPassword();
@@ -61,5 +75,6 @@ public class PrincipalDetails implements UserDetails{
 	public boolean isEnabled() {
 		return true;
 	}
+
 	
 }

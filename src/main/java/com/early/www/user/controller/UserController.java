@@ -55,5 +55,20 @@ public class UserController {
 		return resultMap;
 	}
 	
+	@GetMapping("/user/logout")
+	public Map<String, String> userLogoutRequest(HttpServletResponse response) {
+		
+		System.out.println("[UserController] userLogoutRequest ");
+		Map<String, String> resultMap = new HashMap<String, String>();
+		
+		if(response.getHeader("error_code") != null) {
+			resultMap.put("result_code", response.getHeader("error_code"));
+		}else {
+			resultMap.put("success", "200");
+		}
+		
+		return resultMap;
+	}
+	
 	
 }

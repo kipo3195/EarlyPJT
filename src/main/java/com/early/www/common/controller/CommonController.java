@@ -33,6 +33,7 @@ public class CommonController {
 		
 		ModelAndView mov = new ModelAndView("/main"); 
 		
+		
 		return mov; 
 		
 	}

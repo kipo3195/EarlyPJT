@@ -18,7 +18,6 @@ spring:
     view : 
         suffix: .html
         
-    
 
   jpa:
     hibernate:

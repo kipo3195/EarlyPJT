@@ -75,6 +75,16 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 
 		// 서명이 정상적
 		if(username != null) {
+			
+			// header에 따른 분기처리
+			String type = request.getHeader("type");
+			if(type != null) {
+				// 로그아웃
+				if(type.equals("logout")) {
+					System.out.println("[JwtAuthorizationFilter] logout request username " +username);
+				}
+			}
+			
 			EarlyUser userEntity = commonRepository.findByusername(username);
 			
 			PrincipalDetails principalDetails = new PrincipalDetails(userEntity);
@@ -86,14 +96,13 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 			Authentication authentication = new UsernamePasswordAuthenticationToken(principalDetails, null, principalDetails.getAuthorities());
 			System.out.println(" principalDetails.getAuthorities() : " +  principalDetails.getAuthorities());
 			// security session 공간에 강제로 접근하여 authentication 객체 저장
-			SecurityContextHolder.getContext().setAuthentication(authentication);
 			
-		}
-		chain.doFilter(request, response);
-	
+			
+			SecurityContextHolder.getContext().setAuthentication(authentication);
+		
 	}
-
-
+		chain.doFilter(request, response);
+	}
 	
 	
 }

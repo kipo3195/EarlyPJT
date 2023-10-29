@@ -6,6 +6,18 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 	<script>
 	
+	// 로그인 성공 후 session에 jwt 토큰이 있으면 로그인, 로그아웃, 회원가입 hidden으로 숨김
+	$(document).ready(function(){
+		var jwt = getCookie("jwt");
+		if(jwt != null && jwt.startsWith('Bearer')){
+			$('#join').attr('type', 'hidden');	
+			$('#login').attr('type', 'hidden');	
+			$('#logout').attr('type', 'button');	
+			$('#usermain').attr('type', 'button');	
+		}
+	});
+	
+	// 사용자 메인페이지 이동
 	function goUserMain(){
 		var jwt = getCookie('jwt');
 		if(jwt != null){
@@ -18,6 +30,7 @@
 				},
 				success : function(result){
 					console.log(result);
+					alert("dddd");
 					location.href="/user/mainPage";
 				},
 				error : function(result){
@@ -30,6 +43,37 @@
 			location.href="/loginPage";
 		}
 	}
+
+	// 로그아웃 요청
+	function logoutRequest(){
+		var jwt = getCookie('jwt');
+		if(jwt == null){
+			alert("이미 로그아웃 되었거나 로그인된 사용자가 아닙니다.");
+			location.href="/";
+		}else{
+			$.ajax({
+				type:"get",
+				url:"/user/logout",
+				dataType:"json",
+				beforeSend: function(xhr){
+					xhr.setRequestHeader("Authorization",jwt);
+					xhr.setRequestHeader("type","logout");
+				},
+				success : function(result){
+					console.log(result);
+					alert("로그아웃 되어 메인페이지로 이동합니다.");
+					deleteCookie("jwt");
+					location.href="/";
+				},error : function(result){
+					console.log(result);
+					alert("실패");
+				}
+				
+			});
+			
+		}
+		
+	}
 	
 	function getCookie(name) {
 	    var nameEQ = name + "=";
@@ -41,7 +85,11 @@
 	    }
 	    return null;
 	}
-
+	
+	// 쿠키삭제 
+	function deleteCookie(cookieName) {
+		  document.cookie = cookieName + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+	}
 
 	</script>
 </head>
@@ -51,11 +99,18 @@
 	
 	<br/>
 	<div>
-	<a href="/joinPage">회원가입 바로가기</a>
-	<a href="/loginPage">로그인 바로가기</a>
+		<form method="get" action="/joinPage">
+			<input type="submit" value="회원가입" id="join">
+		</form>
+		<form method="get" action="/loginPage">
+			<input type="submit" value="로그인" id="login">
+		</form>
+		<form method="get" action="/logout">
+			<input type="hidden" value="로그아웃" id="logout" onclick="logoutRequest()">
+		</form>
 	</div>
 	<div>
-	<input type="button" value="사용자 메인이동" onclick="goUserMain()">
+		<input type="hidden" value="사용자 메인이동" id="usermain" onclick="goUserMain()">
 	</div>
 	
 </body>
