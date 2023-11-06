@@ -2,6 +2,7 @@ package com.early.www.user.controller;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -16,6 +17,22 @@ import com.early.www.common.service.CommonService;
 @RestController
 public class UserController {
 
+	
+	@GetMapping("/api/test")
+	public Map<String, String> test() {
+		Map<String, String> resultMap = new HashMap<String, String>();
+		resultMap.put("data", "success");
+		return resultMap;
+	}
+	
+	@GetMapping("/api/random")
+	public Map<String, Double> random() {
+		Map<String, Double> resultMap = new HashMap<String, Double>();
+		
+		double random = Math.random();
+		resultMap.put("data", random);
+		return resultMap;
+	}
 	
 	@Autowired
 	CommonService service;

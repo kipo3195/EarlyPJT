@@ -87,6 +87,13 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 			
 			EarlyUser userEntity = commonRepository.findByusername(username);
 			
+			// userEntity 가 null 인경우 
+			if(userEntity==null) {
+				response.addHeader("error_code", "403");
+				chain.doFilter(request, response);
+				return;
+			}
+			
 			PrincipalDetails principalDetails = new PrincipalDetails(userEntity);
 			
 			// JWT TOKEN 서명이 정상일때 Authentication 객체를 생성하는 방법.
