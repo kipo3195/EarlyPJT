@@ -17,7 +17,7 @@ import com.early.www.common.service.CommonService;
 @RestController
 public class UserController {
 
-	
+	// react axios 테스트
 	@GetMapping("/api/test")
 	public Map<String, String> test() {
 		Map<String, String> resultMap = new HashMap<String, String>();
@@ -25,6 +25,7 @@ public class UserController {
 		return resultMap;
 	}
 	
+	// react axios 테스트
 	@GetMapping("/api/random")
 	public Map<String, Double> random() {
 		Map<String, Double> resultMap = new HashMap<String, Double>();

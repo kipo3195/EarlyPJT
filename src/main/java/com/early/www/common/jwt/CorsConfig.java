@@ -19,7 +19,11 @@ public class CorsConfig {
 		config.addAllowedOriginPattern("*"); //setAllowCredentials 를 true로 사용할때 addAllowedOrigin 대신 addAllowedOriginPattern를 사용하길 권장함. 
 		config.addAllowedHeader("*"); // 모든 header의 응답 허용
 		config.addAllowedMethod("*"); // 모든 http method의 응답 허용  
-		source.registerCorsConfiguration("/api/**", config); 
+		source.registerCorsConfiguration("/**", config); // react localhost:3000에서 접근시
+		// accesss to XMLHttpRequest at 'http://localhost:8080/login' from origin 
+		// 'http://localhost:3000' has been blocked by CORS policy: Response to preflight 
+		//request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+		// registerCorsConfiguration에 해당하는 경로에 대해서만 접근 허용으로 보여서 기존 /user/**에서 수정함.  
 
 		
 		return new CorsFilter(source);
