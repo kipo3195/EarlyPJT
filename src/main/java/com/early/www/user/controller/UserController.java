@@ -2,20 +2,25 @@ package com.early.www.user.controller;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.early.www.common.service.CommonService;
+import com.early.www.user.model.EarlyUser;
 
 @RestController
 public class UserController {
+	
+	@Autowired
+	CommonService service;
 
 	// react axios 테스트
 	@GetMapping("/api/test")
@@ -35,8 +40,6 @@ public class UserController {
 		return resultMap;
 	}
 	
-	@Autowired
-	CommonService service;
 	// 로그인 요청
 	@PostMapping("/login")
 	@ResponseBody
@@ -83,6 +86,42 @@ public class UserController {
 			resultMap.put("result_code", response.getHeader("error_code"));
 		}else {
 			resultMap.put("success", "200");
+		}
+		
+		return resultMap;
+	}
+	
+	
+	// 회원가입 전 ID 중복 체크
+	@GetMapping("/idDupCheck")
+	@ResponseBody
+	public String idDupCheck(@RequestParam String username) {
+		
+		System.out.println("idDupCheck id : " + username);
+		
+		boolean result = service.existsUsername(username);
+
+		System.out.println("[UserController] idDupCheck result : "+ result);
+		
+		if(result) {
+			return "true";
+		}else {
+			return "false";
+		}
+	}
+	
+	// 회원가입 요청
+	// react 버전 axios를 통한 통신으로 데이터 전송시 json 형태로 들어오기 때문에 @RequestBody 어노테이션 필요함.
+	@PostMapping("/join")
+	public Map<String, String> joinRequest(@RequestBody EarlyUser user) {
+		
+		Map<String, String> resultMap = new HashMap<String, String>();
+		
+		String result = service.userJoin(user);
+		if(result.equals("success")) {
+			resultMap.put("flag", "success");
+		}else {
+			resultMap.put("flag", "fail");
 		}
 		
 		return resultMap;

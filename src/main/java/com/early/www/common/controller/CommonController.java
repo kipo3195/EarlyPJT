@@ -63,7 +63,7 @@ public class CommonController {
 		return mov;
 	}
 	
-	// 회원가입 요청 
+	// 회원가입 요청 html 버전 
 	@PostMapping("/joinRequest")
 	public String joinRequest(EarlyUser user) {
 		
@@ -72,24 +72,7 @@ public class CommonController {
 		return "redirect:/";
 	}
 	
-	// ajax
-	// 회원가입 전 ID 중복 체크
-	@GetMapping("/idDupCheck")
-	@ResponseBody
-	public String idDupCheck(@RequestParam String username) {
-		
-		System.out.println("idDupCheck id : " + username);
-		
-		boolean result = service.existsUsername(username);
 
-		System.out.println("CommonController idDupCheck result : "+ result);
-		
-		if(result) {
-			return "true";
-		}else {
-			return "false";
-		}
-	}
 	
 	
 }

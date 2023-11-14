@@ -18,12 +18,28 @@ public class CommonServiceImpl implements CommonService {
 	BCryptPasswordEncoder passwordEncoder;
 	
 	@Override
-	public void userJoin(EarlyUser user) {
-		String encodedPw = passwordEncoder.encode(user.getPassword());
-		user.setPassword(encodedPw);
-		user.setRoles("ROLE_USER");
-		commonRepository.save(user);
-	
+	public String userJoin(EarlyUser user) {
+		String result = "fail";
+		System.out.println("CommonServiceImpl 회원가입 요청 ! 사용자 정보 : "+user);
+		EarlyUser earlyUser = null;
+		// 회원가입 여부 체크 = 동일한 사용자 
+		EarlyUser joinCheck = commonRepository.findByusername(user.getUsername());
+		if(joinCheck != null) {
+			// 이미 가입된 회원 
+		}else {
+			String encodedPw = passwordEncoder.encode(user.getPassword());
+			user.setPassword(encodedPw);
+			user.setRoles("ROLE_USER");
+			
+			// save메소드는 결과값으로 저장한 객체를 반환함. 
+			earlyUser = commonRepository.save(user);
+			if(earlyUser != null) {
+				result = "success";
+			}
+		}
+		
+		
+		return result;
 	}
 
 	@Override

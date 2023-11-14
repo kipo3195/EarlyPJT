@@ -24,7 +24,7 @@ public class EarlyUser {
 	private String phoneNumber;
 	private String birthDay;
 	private String roles; // USER, ADMIN을 사용, Role 객체를 만들어도 됨.  
-
+	
 	// 롤이 여러개이며 구분하기 위해서 
 	public List<String> getRoleList(){
 		if(this.roles.length() > 0) {
