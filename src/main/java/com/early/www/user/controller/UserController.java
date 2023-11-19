@@ -6,6 +6,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,10 +24,16 @@ public class UserController {
 	CommonService service;
 
 	// react axios 테스트
-	@GetMapping("/api/test")
-	public Map<String, String> test() {
+	@GetMapping("/user/random")
+	public Map<String, String> test(HttpServletResponse response) {
 		Map<String, String> resultMap = new HashMap<String, String>();
-		resultMap.put("data", "success");
+		
+		if(response.getHeader("error_code") != null) {
+			resultMap.put("flag", "fail");
+			resultMap.put("error_code", response.getHeader("error_code"));
+		}else {
+			resultMap.put("flag", "success");
+		}
 		return resultMap;
 	}
 	
@@ -123,6 +130,18 @@ public class UserController {
 		}else {
 			resultMap.put("flag", "fail");
 		}
+		
+		return resultMap;
+	}
+	
+	// access token 재발급
+	@PostMapping("/user/accessToken")
+	
+	public Map<String, String> accessToken(HttpServletResponse response){
+		
+		Map<String, String> resultMap = new HashMap<String, String>();
+		
+		resultMap.put("flag", "success");
 		
 		return resultMap;
 	}

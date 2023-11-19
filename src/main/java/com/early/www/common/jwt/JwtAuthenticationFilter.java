@@ -7,11 +7,13 @@ import java.util.Map;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -87,15 +89,39 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 			
 			PrincipalDetails principalDetails = (PrincipalDetails) authResult.getPrincipal();
 			
-			// 토큰 생성
-			String jwtToken = JWT.create()
-					.withSubject("early") // TOKEN 이름
-					.withExpiresAt(new Date(System.currentTimeMillis()+(60000 * 10))) // 만료시간
+			// 토큰 생성 방식
+//			String jwtToken = JWT.create()
+//					.withSubject("early") // TOKEN 이름
+//					.withExpiresAt(new Date(System.currentTimeMillis()+(10000))) // 만료시간
+//					.withClaim("id", principalDetails.getEarlyUser().getId())
+//					.withClaim("username", principalDetails.getUsername())
+//					.sign(Algorithm.HMAC512("early"));  // 서버만 아는 고유한 값이어야함. 
+			
+		
+			String accessToken = JWT.create()
+					.withSubject("accessToken") // TOKEN 이름
+					.withExpiresAt(new Date(System.currentTimeMillis()+(10000))) // 만료시간 10초
 					.withClaim("id", principalDetails.getEarlyUser().getId())
 					.withClaim("username", principalDetails.getUsername())
 					.sign(Algorithm.HMAC512("early"));  // 서버만 아는 고유한 값이어야함. 
+
+			response.addHeader("Authorization", "Bearer "+accessToken); //Bearer 한칸 띄고 jwtToken
 			
-			response.addHeader("Authorization", "Bearer "+jwtToken); //Bearer 한칸 띄고 jwtToken
+			
+			long time = System.currentTimeMillis();
+			System.out.println("refreshToken : exp 1 :"+ time); 
+			String refreshToken = JWT.create()
+					.withSubject("refreshToken") // TOKEN 이름
+					.withClaim("exp", time)
+					.withExpiresAt(new Date(System.currentTimeMillis()+(60000))) // 만료시간 1분
+					.sign(Algorithm.HMAC512("early"));  // 서버만 아는 고유한 값이어야함. 
+			
+			ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+					.maxAge(60)			// 1분 
+					.httpOnly(true)		// 브라우저에서 쿠키에 접근할 수 없도록 제한
+					.build();
+			response.setHeader("Set-Cookie", cookie.toString());
+			
 			// 해당 토큰을 header - Authorization에 담아서 return ..
 			// 다음번 요청시 해당 TOKEN으로 접근시 유효한지 체크하면 됨.(Filter)
 			// 원래 쿠키 + 세션으로 체크하는 것을 JWT TOKEN으로 처리하는 것임. 
