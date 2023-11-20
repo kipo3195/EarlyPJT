@@ -1,18 +1,14 @@
 package com.early.www.common.jwt;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,16 +18,19 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.early.www.repository.TokenRepository;
 import com.early.www.user.model.EarlyUser;
+import com.early.www.user.model.RefreshToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 	
 	AuthenticationManager authenticationManager;
+	private TokenRepository tokenRepository;
 	
-	public JwtAuthenticationFilter(AuthenticationManager authenticationManager) {
+	public JwtAuthenticationFilter(AuthenticationManager authenticationManager, TokenRepository tokenRepository) {
 		this.authenticationManager = authenticationManager;
-		
+		this.tokenRepository = tokenRepository;
 	} 
 	
 		// 1번 실행
@@ -71,7 +70,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 					PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
 					
 					// 출력이된다는건 로그인이 되었다는 의미 
-					System.out.println("[JwtAuthenticationFilter] username : " + principalDetails.getEarlyUser().getUsername());
+					// System.out.println("[JwtAuthenticationFilter] username : " + principalDetails.getEarlyUser().getUsername());
 					
 					// 세션에 저장됨. 굳이 jwt 토큰을 사용하는데 세션을 만들이유가 없다. 다만 권한 처리 때문에 session에 넣어준다.
 					return authentication;
@@ -96,23 +95,25 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 //					.withClaim("id", principalDetails.getEarlyUser().getId())
 //					.withClaim("username", principalDetails.getUsername())
 //					.sign(Algorithm.HMAC512("early"));  // 서버만 아는 고유한 값이어야함. 
-			
 		
+			
+			// access token create start
 			String accessToken = JWT.create()
 					.withSubject("accessToken") // TOKEN 이름
 					.withExpiresAt(new Date(System.currentTimeMillis()+(10000))) // 만료시간 10초
-					.withClaim("id", principalDetails.getEarlyUser().getId())
+					//.withClaim("id", principalDetails.getEarlyUser().getId())
 					.withClaim("username", principalDetails.getUsername())
 					.sign(Algorithm.HMAC512("early"));  // 서버만 아는 고유한 값이어야함. 
 
 			response.addHeader("Authorization", "Bearer "+accessToken); //Bearer 한칸 띄고 jwtToken
+			// access token create end
 			
 			
-			long time = System.currentTimeMillis();
-			System.out.println("refreshToken : exp 1 :"+ time); 
+			// refresh token create start
+			String nowDate = nowDate();
 			String refreshToken = JWT.create()
 					.withSubject("refreshToken") // TOKEN 이름
-					.withClaim("exp", time)
+					.withClaim("nowDate", nowDate)
 					.withExpiresAt(new Date(System.currentTimeMillis()+(60000))) // 만료시간 1분
 					.sign(Algorithm.HMAC512("early"));  // 서버만 아는 고유한 값이어야함. 
 			
@@ -121,6 +122,12 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 					.httpOnly(true)		// 브라우저에서 쿠키에 접근할 수 없도록 제한
 					.build();
 			response.setHeader("Set-Cookie", cookie.toString());
+			// refresh token create end 
+
+			
+			// refresh token DB insert 
+			refreshTokenDBinsert(nowDate, refreshToken, principalDetails.getUsername());
+
 			
 			// 해당 토큰을 header - Authorization에 담아서 return ..
 			// 다음번 요청시 해당 TOKEN으로 접근시 유효한지 체크하면 됨.(Filter)
@@ -144,6 +151,23 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 //	        new ObjectMapper().writeValue(response.getOutputStream(), body);
 		}
 	
-	
+		
+		private void refreshTokenDBinsert(String time, String refreshToken, String username) {
+			RefreshToken token = new RefreshToken();
+			token.setCreateTime(time);
+			token.setRefreshToken(refreshToken);
+			token.setUsername(username);
+			
+			tokenRepository.save(token);
+			
+		}
+		
+		private String nowDate() {
+			String result = null;
+			SimpleDateFormat sDate = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+			result = sDate.format(new Date());
+			return result;
+		}
+
 
 }

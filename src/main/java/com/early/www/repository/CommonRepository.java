@@ -7,5 +7,5 @@ import com.early.www.user.model.EarlyUser;
 public interface CommonRepository  extends JpaRepository<EarlyUser, Long>{
 
 	public EarlyUser findByusername(String username);
-
+	
 }

@@ -141,7 +141,12 @@ public class UserController {
 		
 		Map<String, String> resultMap = new HashMap<String, String>();
 		
-		resultMap.put("flag", "success");
+		if(response.getHeader("error_code") != null) {
+			resultMap.put("result_code", response.getHeader("error_code"));
+		}else if(response.getHeader("Authorization") != null){
+			resultMap.put("flag", "success");
+			resultMap.put("token", response.getHeader("Authorization"));
+		}
 		
 		return resultMap;
 	}

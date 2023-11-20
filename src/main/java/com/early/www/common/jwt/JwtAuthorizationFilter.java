@@ -1,7 +1,8 @@
 package com.early.www.common.jwt;
 
 import java.io.IOException;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -9,6 +10,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -18,9 +20,10 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import com.auth0.jwt.interfaces.Claim;
 import com.early.www.repository.CommonRepository;
+import com.early.www.repository.TokenRepository;
 import com.early.www.user.model.EarlyUser;
+import com.early.www.user.model.RefreshToken;
 
 // 시큐리티가 Filter를 가지고있는데 그 Filter중에 BasicAuthenticationFilter라는 것이 있다.
 // 권한이나 인증이 필요한 특정주소를 요청했을때 위 필터를 무조건 타게되어 있음
@@ -28,12 +31,13 @@ import com.early.www.user.model.EarlyUser;
 public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 
 	private CommonRepository commonRepository;
+	private TokenRepository tokenRepository;
 	
-	public JwtAuthorizationFilter(AuthenticationManager authenticationManager, CommonRepository commonRepository) {
+	public JwtAuthorizationFilter(AuthenticationManager authenticationManager, CommonRepository commonRepository, TokenRepository tokenRepository) {
 		super(authenticationManager);
 		
 		this.commonRepository = commonRepository;
-		
+		this.tokenRepository = tokenRepository;
 	}
 	
 
@@ -59,11 +63,9 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 		String jwtHeader = null; 
 		// access token 
 		if(request.getHeader("Authorization") != null) {
-			System.out.println("여기 1");
 			jwtHeader = request.getHeader("Authorization");
 			// 유효성 검사
 			if(jwtHeader == null || !jwtHeader.startsWith("Bearer")) {
-				System.out.println("여기 2");
 				response.addHeader("error_code", "403");
 				chain.doFilter(request, response);
 				return;
@@ -73,24 +75,54 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 			String username = null;
 			
 			try {
-				System.out.println("여기 3");
+				System.out.println("jwtToken : "+ jwtToken);
 				 username = JWT.require(Algorithm.HMAC512("early")).build().verify(jwtToken).getClaim("username").asString();
+				 System.out.println("11111111111111");
+				 System.out.println("request uri " + request.getRequestURI());
+				 // jwtToken : undefined 
 			}catch(TokenExpiredException e) {
 				// 토큰이 만료되었을때 
-				// TODO 해당 처리를 다른 필터로 해야할지? 왜냐하면 토큰이 만료되었을때 => 만료후 최초 요청이라면 클라이언트로 refresh.
-				// 아니라면 refreshToken이 남아있을때와 없을때로 나누어 처리해야함.  
-				Cookie[] cookies = request.getCookies();
-				for(Cookie cookie:cookies) {
-					if(cookie != null && cookie.getName().equals("refreshToken")) {
-						String refreshToken = cookie.getValue();
-						System.out.println("refreshToken : "+ refreshToken);
-						long exp = JWT.require(Algorithm.HMAC512("early")).build().verify(refreshToken).getClaim("exp").asLong(); // as Long 
-						System.out.println(exp);
+				if(request.getRequestURI().equals("/user/accessToken")) {
+					// http only cookie
+					Cookie[] cookies = request.getCookies();
+					boolean tokenFlag = false;
+					try {
+						for(Cookie cookie : cookies) {
+							if(cookie != null) {
+								if(cookie.getName().equals("refreshToken")) {
+									tokenFlag = true;
+									String refreshToken = cookie.getValue();
+									String nowDate = JWT.require(Algorithm.HMAC512("early")).build().verify(refreshToken).getClaim("nowDate").asString();
+									if(refreshToken != null && nowDate != null) {
+										RefreshToken savedToken = tokenRepository.findByRefreshTokenAndCreateTime(refreshToken, nowDate);
+										if(savedToken != null) {
+											// 토큰 갱신 처리
+											String newAccessToken = createAccessToken(savedToken);
+											String newRefreshToken = createRefreshToken(savedToken);
+											
+											response.addHeader("Authorization", "Bearer "+newAccessToken); //Bearer 한칸 띄고 jwtToken
+											response.setHeader("Set-Cookie", newRefreshToken);
+											
+											chain.doFilter(request, response);
+										}
+									}	
+								}
+							}
+						}
+					}catch(NullPointerException e2) {
+						System.out.println("http only cookies 없음 -> 로그아웃 처리 ");
+						// 다시 로그인 하는 error_code 주기 
+						return;
 					}
+					if(!tokenFlag) {
+						// 다시 로그인 하는 error_code 주기 
+						System.out.println("cookies는 있는데 refreshToken Cookie 없음 -> 로그아웃 처리");
+					}
+				}else {
+					// 다시 토큰을 요청할 수 있도록 response
+					response.addHeader("error_code", "400");
+					chain.doFilter(request, response);
 				}
-				System.out.println("여기 4");
-				response.addHeader("error_code", "400");
-				chain.doFilter(request, response);
 				return;
 			}
 			
@@ -98,7 +130,6 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 			// 서명이 정상적
 			if(username != null) {
 				
-				System.out.println("여기 5");
 				// header에 따른 분기처리
 				String type = request.getHeader("type");
 				if(type != null) {
@@ -111,7 +142,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 				EarlyUser userEntity = commonRepository.findByusername(username);
 				
 				// userEntity 가 null 인경우 
-				if(userEntity==null) {
+				if(userEntity == null) {
 					response.addHeader("error_code", "403");
 					chain.doFilter(request, response);
 					return;
@@ -134,6 +165,53 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 		}
 
 		chain.doFilter(request, response);
+	}
+
+
+	private String createRefreshToken(RefreshToken refreshToken) {
+		String nowDate = nowDate();
+		String newRefreshToken = JWT.create()
+				.withSubject("refreshToken") // TOKEN 이름
+				.withClaim("nowDate", nowDate)
+				.withExpiresAt(new Date(System.currentTimeMillis()+(60000))) // 만료시간 1분
+				.sign(Algorithm.HMAC512("early"));  // 서버만 아는 고유한 값이어야함. 
+		
+		ResponseCookie cookie = ResponseCookie.from("refreshToken", newRefreshToken)
+				.maxAge(60)			// 1분 
+				.httpOnly(true)		// 브라우저에서 쿠키에 접근할 수 없도록 제한
+				.build();
+		
+		// refresh token DB insert 
+		refreshTokenDBinsert(nowDate, newRefreshToken, refreshToken.getUsername());
+		
+		return cookie.toString();
+	}
+
+	private String nowDate() {
+		String result = null;
+		SimpleDateFormat sDate = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+		result = sDate.format(new Date());
+		return result;
+	}
+
+	private String createAccessToken(RefreshToken refreshToken) {
+		String accessToken = JWT.create()
+				.withSubject("accessToken") // TOKEN 이름
+				.withExpiresAt(new Date(System.currentTimeMillis()+(10000))) // 만료시간 10초
+				.withClaim("username", refreshToken.getUsername())
+				.sign(Algorithm.HMAC512("early"));  // 서버만 아는 고유한 값이어야함.  
+		
+		return accessToken;
+	}
+	
+	private void refreshTokenDBinsert(String time, String refreshToken, String username) {
+		RefreshToken token = new RefreshToken();
+		token.setCreateTime(time);
+		token.setRefreshToken(refreshToken);
+		token.setUsername(username);
+		
+		tokenRepository.save(token);
+		
 	}
 	
 	

@@ -14,6 +14,7 @@ import org.springframework.web.filter.CorsFilter;
 import com.early.www.common.jwt.JwtAuthenticationFilter;
 import com.early.www.common.jwt.JwtAuthorizationFilter;
 import com.early.www.repository.CommonRepository;
+import com.early.www.repository.TokenRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,6 +26,8 @@ public class SecurityConfig {
 	private final CorsFilter corsFilter;
 	
 	private final CommonRepository commonRepository;
+	
+	private final TokenRepository tokenRepository;
 	
 	private final AuthenticationConfiguration authenticationConfiguration;
 	
@@ -48,8 +51,8 @@ public class SecurityConfig {
 		.and()
 		.addFilter(corsFilter)
 		.formLogin().disable()
-		.addFilter(new JwtAuthenticationFilter(authenticationManager(authenticationConfiguration)))
-		.addFilter(new JwtAuthorizationFilter(authenticationManager(authenticationConfiguration), commonRepository))
+		.addFilter(new JwtAuthenticationFilter(authenticationManager(authenticationConfiguration), tokenRepository))
+		.addFilter(new JwtAuthorizationFilter(authenticationManager(authenticationConfiguration), commonRepository, tokenRepository))
 		.requestMatchers().antMatchers("/user/**","/login").and() // 특정 URL에만 Filter를 태우도록 처리함. (jwt)
 		.authorizeRequests()	// 다음 리퀘스트에 대한 사용자 권한 체크
 		//.antMatchers("/user/**").hasRole("USER") //role 기반이 아닌 url - jwt 기반으로 처리
