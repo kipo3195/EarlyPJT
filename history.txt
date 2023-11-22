@@ -1,0 +1,79 @@
+
+	##########################################	
+	#####		  html  version			 #####
+	##########################################
+
+2023.10.17 
+	1. EarlyPJT 최초 커밋
+	
+2023.10.20 
+	1. form tag에서 post 방식으로 Controller에 전달하도록 처리
+	2. 회원가입시 비밀번호와 비밀번호 확인 입력의 정합성을 체크하는 로직 추가
+	3. controller에서 page redirect 처리 추가
+	4. jpa를 활용한 회원가입 로직 추가
+	
+2023.10.21 
+	1. ajax를 활용한 ID 중복검사 로직 추가
+		1) jquery 반영
+		2) jap의 쿼리 메소드 활용하여 select 쿼리 작성
+		3) id email 형식 정규식 검사	
+
+2023.10.22 
+	1. 로그인 로직 ajax 사용
+	2. BcryptPasswordEncoder matchers 사용
+	3. 로그인 시 인증 및 인증이 필요한 url 접근시 동작하는 필터 추가
+	
+2023.10.23 
+	1. 로그인 이후 호출 페이지 수정	
+	
+2023.10.28 
+	1. jwt 검증이 필요한 url만 jwt 인증/인가 필터를 타도록 처리
+	2. 페이지 이동의 이슈를 해결
+		1) ajax로 호출, Filter에서 jwt 검증 후 RestController에서 map return
+		2) html에서 success시 map에 어떤 데이터가 있는지에 따라 분기처리
+		3) 정상적인 요청(jwt 검증)이라면 location.href로 이동
+		4) 해당 url의 매핑 Controller가 처리	
+		
+2023.10.29 
+	1. 로그아웃 페이지 및 기능 구현
+	2. html 동작 수정
+		1) 로그인 시 로그아웃 및 사용자 메인 활성화
+		2) 메인 페이지에서 로그아웃, 사용자 메인 비활성화
+		
+2023.11.06 
+	1. CORS 필터 수정
+		1) setAllowCredentials를 true로 사용할때 addAllowedOrigin 대신 addAllowedOriginPattern를 사용하길 권장함.	
+		
+		
+	##########################################	
+	#####		  react  version		 #####
+	##########################################
+	
+2023.11.07 
+	1. React에서 /login 요청시 CORS 정책에 의해 접근이 불가능한 부분 해결
+	
+2023.11.14 
+	1. rest api 요청은 UserController로 이동함.
+	2. 회원가입시 UserController에서 넘겨받는 매개변수에 @requestbody 어노테이션 추가
+	3. 회원가입 로직 수정(username=id로 기존 가입여부 체크)	
+	
+2023.11.19 
+	1. refresh 토큰 로직 추가 작업진행중
+	
+2023.11.20 
+	1. refresh 토큰 추가작업
+		1) access token 만료시 특정 url로 호출하면 refresh token을 새로 발급
+		2) 현재 2번째 만료시 jwtToken : undefined 이슈 발생
+		
+2023.11.23
+	1. refresh 토큰 추가작업 완료
+		1) refresh 토큰 만료시 로그아웃 처리 (refresh 토큰 만료시 갱신안함)
+			 : 기존의 설계는 access token을 재발급 할때 refresh token도 갱신 처리 했는데 
+			   이렇게 되면 로그아웃 하지 않고 사용하는 사용자들이 발생할 수 있다는 생각이 들어서 주석처리함
+			   만약 refreshToken을 재발급 한다고 하더라고 해당 로직을 주석 처리하는 것이 아니라 
+			   access token의 갱신 시간이 남아 있을때 검증 후 처리하는 것이 바람직해 보임. 
+			   
+			   로그아웃 error_code정의 response.addHeader("error_code", "401");
+	
+		
+			

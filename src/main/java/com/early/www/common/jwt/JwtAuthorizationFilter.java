@@ -51,14 +51,15 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 		// 그렇기 때문에 chain.doFilter(request, response) 해버려서 security session에 set하지 못함.  
 		// so, 주석 처리 
 	
-		System.out.println("[JwtAuthorizationFilter] 인증이나 권한이 필요한 주소 요청이 됨.");
+		System.out.println("[JwtAuthorizationFilter] 인증이나 권한이 필요한 주소 요청 !");
+		System.out.println("[JwtAuthorizationFilter] requestUrl : "+request.getRequestURI());
+		
 		// 사실 인증, 권한이 필요한 주소 뿐아니라 모든 url 요청시 해당 메소드가 호출된다. 
-		// doFilterInternal 내부 로직을 봤을때 header에 JWT 토큰이 있는지 없는지 판단하고 
+		// doFilterInternal 내부 로직을 봤을때 header에 JWT token이 있는지 없는지 판단하고 
 		// 없는경우 (로그인 X) 다음 Chain으로 넘겨주기만 하면 될 것이고,
-		// 있는경우 header의 JWT 토큰을 검증한 다음 해당 사용자의 authentication을 SecurityContextHolder이 관리할 수 있도록
+		// 있는경우 header의 JWT token을 검증한 다음 해당 사용자의 authentication을 SecurityContextHolder이 관리할 수 있도록
 		// set 한 다음 다음 Chain으로 넘겨주면 된다. 
 		// 아마도 해당 사용자의 권한정보를 세션에 넣어서 사용하기 위함이라고 판단된다.
-		
 		
 		String jwtHeader = null; 
 		// access token 
@@ -70,56 +71,80 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 				chain.doFilter(request, response);
 				return;
 			}
-			// jwt header에 넘어온 토큰을 통해서 정상적인 사용자인지 체킹
+			// jwt header에 넘어온 token을 통해서 정상적인 사용자인지 체킹
 			String jwtToken = jwtHeader.replace("Bearer ", "");
 			String username = null;
 			
 			try {
-				System.out.println("jwtToken : "+ jwtToken);
+				
 				 username = JWT.require(Algorithm.HMAC512("early")).build().verify(jwtToken).getClaim("username").asString();
-				 System.out.println("11111111111111");
-				 System.out.println("request uri " + request.getRequestURI());
-				 // jwtToken : undefined 
+				 
 			}catch(TokenExpiredException e) {
-				// 토큰이 만료되었을때 
+				// access token 만료되었을때 
+				String nowDate = null;
+				boolean tokenFlag = false;
 				if(request.getRequestURI().equals("/user/accessToken")) {
-					// http only cookie
-					Cookie[] cookies = request.getCookies();
-					boolean tokenFlag = false;
+					
 					try {
+						// cookie 검증
+						Cookie[] cookies = request.getCookies();
 						for(Cookie cookie : cookies) {
 							if(cookie != null) {
 								if(cookie.getName().equals("refreshToken")) {
+									
+									//cookie에 refresh token이 있는경우 true;
 									tokenFlag = true;
+									
 									String refreshToken = cookie.getValue();
-									String nowDate = JWT.require(Algorithm.HMAC512("early")).build().verify(refreshToken).getClaim("nowDate").asString();
+									try {
+										// refresh token 검증 
+										nowDate = JWT.require(Algorithm.HMAC512("early")).build().verify(refreshToken).getClaim("nowDate").asString();
+									}catch(TokenExpiredException e2) {
+										// refresh token 만료 
+										System.out.println("[JwtAuthorizationFilter] refresh token 만료 ! 로그아웃 처리");
+										response.addHeader("error_code", "401");
+										return;
+										
+									}
 									if(refreshToken != null && nowDate != null) {
 										RefreshToken savedToken = tokenRepository.findByRefreshTokenAndCreateTime(refreshToken, nowDate);
 										if(savedToken != null) {
-											// 토큰 갱신 처리
+											// token 갱신 처리
+											System.out.println("[JwtAuthorizationFilter] token 재발급 성공");
+
 											String newAccessToken = createAccessToken(savedToken);
-											String newRefreshToken = createRefreshToken(savedToken);
-											
 											response.addHeader("Authorization", "Bearer "+newAccessToken); //Bearer 한칸 띄고 jwtToken
-											response.setHeader("Set-Cookie", newRefreshToken);
 											
 											chain.doFilter(request, response);
+											
+											// 20231122 기존의 설계는 access token을 재발급 할때 refresh token도 갱신 처리 했는데 
+											// 이렇게 되면 로그아웃 하지 않고 사용하는 사용자들이 발생할 수 있다는 생각이 들어서 주석처리함
+											// 만약 refreshToken을 재발급 한다고 하더라고 해당 로직을 주석 처리하는 것이 아니라 
+											// access token의 갱신 시간이 남아 있을때 검증 후 처리하는 것이 바람직해 보임. 
+											// String newRefreshToken = createRefreshToken(savedToken);
+											// response.setHeader("Set-Cookie", newRefreshToken);
 										}
 									}	
 								}
 							}
+							
 						}
+						
 					}catch(NullPointerException e2) {
-						System.out.println("http only cookies 없음 -> 로그아웃 처리 ");
+						System.out.println("[JwtAuthorizationFilter] cookies 없음 -> 로그아웃 처리 ");
+						response.addHeader("error_code", "401");
 						// 다시 로그인 하는 error_code 주기 
+						chain.doFilter(request, response);
 						return;
 					}
 					if(!tokenFlag) {
 						// 다시 로그인 하는 error_code 주기 
-						System.out.println("cookies는 있는데 refreshToken Cookie 없음 -> 로그아웃 처리");
+						System.out.println(" [JwtAuthorizationFilter] Cookie에 refreshToken 없음 -> 로그아웃 처리");
+						response.addHeader("error_code", "401");
+						chain.doFilter(request, response);
 					}
 				}else {
-					// 다시 토큰을 요청할 수 있도록 response
+					// 다시 token을 요청할 수 있도록 response
 					response.addHeader("error_code", "400");
 					chain.doFilter(request, response);
 				}

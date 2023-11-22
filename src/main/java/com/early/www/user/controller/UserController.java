@@ -136,12 +136,12 @@ public class UserController {
 	
 	// access token 재발급
 	@PostMapping("/user/accessToken")
-	
 	public Map<String, String> accessToken(HttpServletResponse response){
 		
 		Map<String, String> resultMap = new HashMap<String, String>();
 		
 		if(response.getHeader("error_code") != null) {
+			resultMap.put("flag", "fail");
 			resultMap.put("result_code", response.getHeader("error_code"));
 		}else if(response.getHeader("Authorization") != null){
 			resultMap.put("flag", "success");
