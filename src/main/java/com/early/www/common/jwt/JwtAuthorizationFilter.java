@@ -30,6 +30,20 @@ import com.early.www.user.model.RefreshToken;
 // 만약에 권한이나 인증이 필요한 주소가 아니라면 이 필터를 타지 않음. 현재 프로젝트는 모든 요청에 대해 해당 필터를 타고있음. 
 public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 
+	/* 에러코드 정의 
+	 * 
+	 * 400 access token expired
+	 * 
+	 * 401 refresh token expired 
+	 * 
+	 * 402
+	 * 
+	 * 403 there isn't access token, refresh token 
+	 * 
+	 * */
+	
+	
+	
 	private CommonRepository commonRepository;
 	private TokenRepository tokenRepository;
 	
@@ -39,7 +53,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 		this.commonRepository = commonRepository;
 		this.tokenRepository = tokenRepository;
 	}
-	
+		
 
 	// 인증이나 권한이 필요한 주소요청이 있을때 해당 필터를 타게됨. 
 	@Override
@@ -114,7 +128,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 
 											String newAccessToken = createAccessToken(savedToken);
 											response.addHeader("Authorization", "Bearer "+newAccessToken); //Bearer 한칸 띄고 jwtToken
-											
+											 
 											chain.doFilter(request, response);
 											
 											// 20231122 기존의 설계는 access token을 재발급 할때 refresh token도 갱신 처리 했는데 
@@ -187,6 +201,9 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 			}
 		
 		
+		}else {
+			System.out.println("[JwtAuthorizationFilter] access token 없음");
+			response.addHeader("error_code", "403");
 		}
 
 		chain.doFilter(request, response);

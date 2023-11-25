@@ -114,7 +114,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 			String refreshToken = JWT.create()
 					.withSubject("refreshToken") // TOKEN 이름
 					.withClaim("nowDate", nowDate)
-					.withExpiresAt(new Date(System.currentTimeMillis()+(60000))) // 만료시간 1분
+					.withExpiresAt(new Date(System.currentTimeMillis()+(20000))) // 만료시간 1분
 					.sign(Algorithm.HMAC512("early"));  // 서버만 아는 고유한 값이어야함. 
 			
 			ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
