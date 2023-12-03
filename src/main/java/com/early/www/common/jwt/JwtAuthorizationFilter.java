@@ -90,7 +90,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 			String username = null;
 			
 			try {
-				
+				 
 				 username = JWT.require(Algorithm.HMAC512("early")).build().verify(jwtToken).getClaim("username").asString();
 				 
 			}catch(TokenExpiredException e) {
@@ -201,6 +201,10 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 			}
 		
 		
+		}else if(request.getRequestURI().equals("/login")) {
+			System.out.println("[JwtAuthorizationFilter] 로그인");
+			
+			//로그인시 필요한 데이터를 내려 줄 수 있음. 
 		}else {
 			System.out.println("[JwtAuthorizationFilter] access token 없음");
 			response.addHeader("error_code", "403");
