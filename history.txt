@@ -93,5 +93,13 @@
 2023.12.03
 	1. 토큰 검증 API 추가 (/user/accessToken)	
 	
+
+2023.12.05
+	1. 토큰 검증 로직 수정 
+		: JwtAuthorizationFilter에서 refresh 토큰 만료시 header에 error_code만 담고 다음 로직(UserController)를 태우지 않는 부분 수정
+	2. 채팅 기능 추가 
+		: UserChatController 추가 (/user/chatList) 임의의 json 데이터를 생성해서 react로 response 함.
+			
+		
 		
 			

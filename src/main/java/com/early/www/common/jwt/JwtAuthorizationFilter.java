@@ -117,6 +117,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 										// refresh token 만료 
 										System.out.println("[JwtAuthorizationFilter] refresh token 만료 ! 로그아웃 처리");
 										response.addHeader("error_code", "401");
+										chain.doFilter(request, response);
 										return;
 										
 									}

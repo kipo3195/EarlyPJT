@@ -60,7 +60,6 @@ public class UserController {
 			resultMap.put("flag", "success");
 			resultMap.put("token", response.getHeader("Authorization"));
 		}
-		
 		return resultMap;
 	}
 	
