@@ -101,5 +101,9 @@
 		: UserChatController 추가 (/user/chatList) 임의의 json 데이터를 생성해서 react로 response 함.
 			
 		
+2023.12.12
+	1. 채팅 관련 model 생성
+		: table 생성 
+	2. 채팅 controller, service 생성
 		
 			

@@ -76,6 +76,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 		// 아마도 해당 사용자의 권한정보를 세션에 넣어서 사용하기 위함이라고 판단된다.
 		
 		String jwtHeader = null; 
+		String username = null;
 		// access token 
 		if(request.getHeader("Authorization") != null) {
 			jwtHeader = request.getHeader("Authorization");
@@ -87,7 +88,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 			}
 			// jwt header에 넘어온 token을 통해서 정상적인 사용자인지 체킹
 			String jwtToken = jwtHeader.replace("Bearer ", "");
-			String username = null;
+		
 			
 			try {
 				 
@@ -206,6 +207,10 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 			System.out.println("[JwtAuthorizationFilter] 로그인");
 			
 			//로그인시 필요한 데이터를 내려 줄 수 있음. 
+		}else if(request.getRequestURI().equals("/user/chatList")) {
+		
+			System.out.println("[JwtAuthorizationFilter] 채팅 리스트 요청 " + username);
+			
 		}else {
 			System.out.println("[JwtAuthorizationFilter] access token 없음");
 			response.addHeader("error_code", "403");
