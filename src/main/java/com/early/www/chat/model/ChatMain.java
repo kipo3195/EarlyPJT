@@ -22,7 +22,7 @@ public class ChatMain{
 	@Column(name="chat_seq")
 	private long chatSeq;
 	
-	@Column(name="chat_line_key", nullable=false, length=255)
+	@Column(name="chat_line_key", nullable=false, length=30)
 	private String chatLineKey;
 	
 	@Column(name="chat_room_key", nullable=false, length=255)

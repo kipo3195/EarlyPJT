@@ -200,6 +200,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 				// security session 공간에 강제로 접근하여 authentication 객체 저장
 				
 				SecurityContextHolder.getContext().setAuthentication(authentication);
+				request.setAttribute("username", username);
 			}
 		
 		
@@ -207,15 +208,11 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 			System.out.println("[JwtAuthorizationFilter] 로그인");
 			
 			//로그인시 필요한 데이터를 내려 줄 수 있음. 
-		}else if(request.getRequestURI().equals("/user/chatList")) {
-		
-			System.out.println("[JwtAuthorizationFilter] 채팅 리스트 요청 " + username);
-			
 		}else {
 			System.out.println("[JwtAuthorizationFilter] access token 없음");
 			response.addHeader("error_code", "403");
 		}
-
+		
 		chain.doFilter(request, response);
 	}
 

@@ -25,7 +25,7 @@ public class ChatList {
 	private String chatRoomKey; 
 	
 	// 내 ID
-	@Column(name="chat_room_user", nullable=false, length=100)
-	private String chatRoomUser;
+	@Column(name="chat_list_user", nullable=false, length=100)
+	private String chatListUser;
 	
 }

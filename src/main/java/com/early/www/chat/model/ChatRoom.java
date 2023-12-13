@@ -33,5 +33,8 @@ public class ChatRoom {
 	@Column(name="create_room_date", nullable=false, length=20)
 	private String sendDate;
 	
+	@Column(name="last_line_key", nullable=false, length=30)
+	private String lastLineKey;
+	
 
 }

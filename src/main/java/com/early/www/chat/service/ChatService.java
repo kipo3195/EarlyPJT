@@ -1,10 +1,12 @@
 package com.early.www.chat.service;
 
-import org.json.simple.JSONArray;
+import java.util.List;
+
+import com.early.www.chat.model.ChatRoom;
 
 public interface ChatService {
 
-	public JSONArray getMyChatList(String username);
+	public List<ChatRoom> getMyChatList(String username);
 	
 	
 }
