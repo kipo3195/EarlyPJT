@@ -168,7 +168,10 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 			}
 			
 			
-			// 서명이 정상적
+			// 서명이 정상적 20231214 여기 이하 로직 정리
+			// access 토큰에서 추출한 id를 DB에 검증한다면 jwt를 사용하는 이유가 없음. 해당 부분에서 SecurityContextHolder에 저장해야되는지 검증하기
+			// 저장하지 않아도 된다면 DB 조회로직 제거 
+			// 이후 로그인 할때 session에 넣은 데이터를 조회 해 와서 request.setAttribute("username", username); 처리 할 수 있는지 해보기
 			if(username != null) {
 				
 				// header에 따른 분기처리
