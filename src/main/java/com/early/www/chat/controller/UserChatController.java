@@ -1,5 +1,6 @@
 package com.early.www.chat.controller;
 
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,21 +8,29 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.early.www.chat.model.ChatMain;
 import com.early.www.chat.model.ChatRoom;
 import com.early.www.chat.service.ChatService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
+@RequiredArgsConstructor
 public class UserChatController {
 
 	@Autowired
 	ChatService service;
+	
 	
 	
 	@PostMapping("/user/chatList")
@@ -66,6 +75,25 @@ public class UserChatController {
 		return resultMap;
 	}
 	
+	
+	private final SimpMessagingTemplate simpMessagingTemplate;
+	
+	@MessageMapping("/test/message")
+	public String handle(ChatMain main) {
+		
+		System.out.println(main);
+		
+		String recvIds[] = main.getChatReceiver().split("[|]");
+		
+		for(int i = 0; i< recvIds.length; i++) {
+			String dest = "/sub/channels/"+recvIds[i];
+			System.out.println(dest);
+			simpMessagingTemplate.convertAndSend(dest, main.getChatContents());
+			
+		}
+		
+		return "";
+	}
 
 	
 	
