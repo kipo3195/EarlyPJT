@@ -8,10 +8,9 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,10 +28,9 @@ import lombok.RequiredArgsConstructor;
 public class UserChatController {
 
 	@Autowired
-	ChatService service;
+	ChatService chatService;
 	
-	
-	
+	// 채팅방 리스트 조회 
 	@PostMapping("/user/chatList")
 	public Map<String, String> chatList(HttpServletRequest request){
 		
@@ -42,7 +40,7 @@ public class UserChatController {
 		Map<String, String> resultMap = new HashMap<String, String>();
 		
 		if(username != null && !username.isEmpty()) {
-			List<ChatRoom> chatList = service.getMyChatList(username);
+			List<ChatRoom> chatList = chatService.getMyChatList(username);
 			if(chatList != null && !chatList.isEmpty()) {
 				
 				ObjectMapper mapper = new ObjectMapper();
@@ -79,23 +77,23 @@ public class UserChatController {
 	private final SimpMessagingTemplate simpMessagingTemplate;
 	
 	@MessageMapping("/test/message")
-	public String handle(ChatMain main) {
-		
-		System.out.println(main);
+	public void handle(ChatMain main) {
 		
 		String recvIds[] = main.getChatReceiver().split("[|]");
 		
-		for(int i = 0; i< recvIds.length; i++) {
-			String dest = "/sub/channels/"+recvIds[i];
-			System.out.println(dest);
-			simpMessagingTemplate.convertAndSend(dest, main.getChatContents());
-			
-		}
+		// DB 저장
+		chatService.putChatMain(main);
 		
-		return "";
+		// STOMP를 통한 데이터 전송
+		for(int i = 0; i< recvIds.length; i++) {
+			
+			// 여기 나중에 처리하기  
+			if(!main.getChatSender().toLowerCase().equals(recvIds[i].toLowerCase())) {
+				String dest = "/queue/user/"+recvIds[i];
+				simpMessagingTemplate.convertAndSend(dest, main.getChatContents());
+			}
+		}
 	}
-
-	
 	
 	
 }

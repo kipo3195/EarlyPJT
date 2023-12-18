@@ -34,13 +34,14 @@
 		    <artifactId>spring-boot-starter-websocket</artifactId>
 		</dependency>
 				
-		<!-- https://mvnrepository.com/artifact/org.webjars.bower/sockjs-client -->
-		<dependency>
-		    <groupId>org.webjars.bower</groupId>
-		    <artifactId>sockjs-client</artifactId>
-		    <version>1.1.4</version>
-		</dependency>
 		
+		<!-- https://mvnrepository.com/artifact/org.webjars.npm/sockjs-client -->
+		<dependency>
+		    <groupId>org.webjars.npm</groupId>
+		    <artifactId>sockjs-client</artifactId>
+		    <version>1.6.1</version>
+		</dependency>
+
 		<!-- https://mvnrepository.com/artifact/org.webjars/stomp-websocket -->
 		<dependency>
 		    <groupId>org.webjars</groupId>

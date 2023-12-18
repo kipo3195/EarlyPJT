@@ -22,31 +22,31 @@ public class ChatMain{
 	@Column(name="chat_seq")
 	private long chatSeq;
 	
-	@Column(name="chat_line_key", nullable=false, length=30)
+	@Column(name="chat_line_key", length=30)
 	private String chatLineKey;
 	
-	@Column(name="chat_room_key", nullable=false, length=255)
+	@Column(name="chat_room_key",  length=255)
 	private String chatRoomKey; 
 	
-	@Column(name="chat_sender", nullable=false, length=100)
+	@Column(name="chat_sender", length=100)
 	private String chatSender;
 	
-	@Column(name="chat_receiver", nullable=false, length=3000)
+	@Column(name="chat_receiver",  length=3000)
 	private String chatReceiver;
 	
-	@Column(name="chat_title", nullable=false, length=500)
+	@Column(name="chat_title", length=500)
 	private String chatTitle;
 	
-	@Column(name="chat_encrypt_key", nullable=false, length=255)
+	@Column(name="chat_encrypt_key", length=255)
 	private String chatEncryptKey;
 	
-	@Column(name="chat_contents", nullable=false, length=4000)
+	@Column(name="chat_contents", length=4000)
 	private String chatContents;
 
-	@Column(name="chat_type", nullable=false, length=3)
+	@Column(name="chat_type", length=3)
 	private String chatType;
 	
-	@Column(name="chat_send_date", nullable=false, length=20)
+	@Column(name="chat_send_date", length=20)
 	private String sendDate;
 	
 	@Column(name="chat_del_flag", length=1)

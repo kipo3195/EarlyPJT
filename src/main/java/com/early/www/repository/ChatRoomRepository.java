@@ -5,10 +5,9 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import com.early.www.chat.model.ChatList;
 import com.early.www.chat.model.ChatRoom;
 
-public interface ChatRepository extends JpaRepository<ChatRoom, Long>{
+public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long>{
 
 	// 테이블 기준으로 컬럼의 snake 표기법을 camel로 변경해야함. 매개변수는 상관없음.
 	// 단 nativeQuery를 사용하면 일반 쿼리와 동일하게 처리 할 수 있음.  
