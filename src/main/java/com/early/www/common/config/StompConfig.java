@@ -48,7 +48,7 @@ public class StompConfig implements WebSocketMessageBrokerConfigurer{
         		.withSockJS()
         		.setStreamBytesLimit(512 * 1024) //512KB
         		.setHttpMessageCacheSize(1000)
-        		.setDisconnectDelay(5 * 1000);
+        		.setDisconnectDelay(1000);
     }
 
     @Override

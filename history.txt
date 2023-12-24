@@ -130,3 +130,6 @@
 		: controller에서 convertAndSend할때 url을 리액트 클라이언트의 구독 url(queue, topic)으로 수정	
 	2. 프론트에서 pub한 데이터 DB 저장완료
 		: 라인키 생성 추가
+
+2023.12.24
+	1. 웹소켓 Connect/DisConnect Listener 등록 		

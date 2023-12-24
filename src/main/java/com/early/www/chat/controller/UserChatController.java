@@ -84,12 +84,13 @@ public class UserChatController {
 		// DB 저장
 		chatService.putChatMain(main);
 		
+		System.out.println( main.getChatContents());
 		// STOMP를 통한 데이터 전송
 		for(int i = 0; i< recvIds.length; i++) {
 			
 			// 여기 나중에 처리하기  
 			if(!main.getChatSender().toLowerCase().equals(recvIds[i].toLowerCase())) {
-				String dest = "/queue/user/"+recvIds[i];
+				String dest = "/topic/user/"+recvIds[i];
 				simpMessagingTemplate.convertAndSend(dest, main.getChatContents());
 			}
 		}
