@@ -1,6 +1,7 @@
 package com.early.www.chat.service;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -21,6 +22,17 @@ public class ChatSericeImpl implements ChatService {
 	@Autowired
 	ChatMainRepository chatMainRepository;
 	
+	// line key 생성
+	public String makeLineKey() {
+		long time = System.currentTimeMillis();
+		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("YYYYMMddHHmmssSSS");
+		Date date = new Date();
+		date.setTime(time);
+		
+		return simpleDateFormat.format(date);
+	}
+
+	
 	// 채팅 리스트 조회
 	@Override
 	public List<ChatRoom> getMyChatList(String username) {
@@ -34,21 +46,34 @@ public class ChatSericeImpl implements ChatService {
 	//채팅 라인 저장
 	@Override
 	public void putChatMain(ChatMain main) {
-		
-		main.setChatLineKey(makeLineKey());
+		String lineKey = makeLineKey();
+		main.setChatLineKey(lineKey);
+		main.setChatDelFlag("N");
+		main.setSendDate(lineKey);
 		System.out.println("[ChatSericeImpl] main : " + main);
 		chatMainRepository.save(main);
 		
+	}
+
+	// 채팅방 데이터 조회 (최초)
+	@Override
+	public List<ChatMain> getChatRoomLine(String chatRoomKey) {
 		
+		List<ChatMain> chatMainList = chatMainRepository.findByChatRoomKey(chatRoomKey);
+		
+		return chatMainList;
+	}
+
+	// 채팅방 데이터 조회 (최초 이후)
+	@Override
+	public List<ChatMain> getChatRoomLineAppend(String chatRoomKey, String lineKey) {
+		
+		List<ChatMain> chatMainList = chatMainRepository.findByChatRoomKeyAndLineKey(chatRoomKey, lineKey);
+		
+		return chatMainList;
 	}
 	
-	public String makeLineKey() {
-		long time = System.currentTimeMillis();
-		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("YYYYMMddHHmmssSSS");
-		Date date = new Date();
-		date.setTime(time);
-		
-		return simpleDateFormat.format(date);
-	}
+	
+	
 
 }
