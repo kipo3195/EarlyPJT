@@ -26,7 +26,7 @@ public class PrincipalDetailsService implements UserDetailsService{
 		EarlyUser userEntity = commonRepository.findByusername(username);
 
 		//System.out.println("[PrincipalDetailsService] loadUserByUsername userEntity : "+userEntity);
-
+		// 정보가 존재 하지 않는다면 exception 발생
 		if(userEntity == null) {
 			return null;
 		}

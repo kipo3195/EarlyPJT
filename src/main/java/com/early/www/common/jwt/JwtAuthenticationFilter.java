@@ -14,6 +14,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.auth0.jwt.JWT;
@@ -23,6 +24,7 @@ import com.early.www.user.model.EarlyUser;
 import com.early.www.user.model.RefreshToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+// This filter by default responds to the URL /login.
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 	
 	AuthenticationManager authenticationManager;
@@ -61,18 +63,20 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 						= new UsernamePasswordAuthenticationToken(earlyUser.getUsername(), earlyUser.getPassword());
 				// PrincipalDetailsService의 loadUserByUsername가 실행 = 실제 로그인 시도해서 만드는 Authentication
 				// DB에 있는 username, password가 일치 authentication != null
+				
 				Authentication authentication = authenticationManager.authenticate(authenticationToken);
+				// 계정 정보가 존재하지 않는다면 여기서 throws exception 
 				
 				if(authentication == null) {
 					System.out.println("[JwtAuthenticationFilter] 일치하는 정보가 없습니다. ");
 				}else {
-					// authentication에는 로그인한 정보가 담김
-					PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
+					// authentication에는 principalDetails (사용자 정보 객체), Credentials, Authenticated(T/F), Granted Authorities 정보 등이 담겨있음.
+					// System.out.println("[JwtAuthenticationFilter] authentication : " +authentication);
 					
-					// 출력이된다는건 로그인이 되었다는 의미 
+					// 로그인된 사용자의 계정명을 출력하는 로그 
+					// PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
 					// System.out.println("[JwtAuthenticationFilter] username : " + principalDetails.getEarlyUser().getUsername());
 					
-					// 세션에 저장됨. 굳이 jwt 토큰을 사용하는데 세션을 만들이유가 없다. 다만 권한 처리 때문에 session에 넣어준다.
 					return authentication;
 				}
 			} catch (IOException e) {
@@ -130,7 +134,11 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
 			// 해당 토큰을 header - Authorization에 담아서 return ..
 			// 다음번 요청시 해당 TOKEN으로 접근시 유효한지 체크하면 됨.(Filter)
-			// 원래 쿠키 + 세션으로 체크하는 것을 JWT TOKEN으로 처리하는 것임. 
+			// 원래 쿠키 + 세션으로 체크하는 것을 JWT TOKEN으로 처리하는 것임.
+			
+			// SecurityContextHolder 영역에 저장.
+			SecurityContextHolder.getContext().setAuthentication(authResult);
+			
 			chain.doFilter(request, response);
 		}
 

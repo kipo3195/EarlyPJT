@@ -50,7 +50,8 @@ public class SecurityConfig {
 		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 		.and()
 		.addFilter(corsFilter)
-		.formLogin().disable()
+		.formLogin().disable()	// formLogin().disable 한다는 것은 spring security가 제공하는 form 로그인을 사용하지 않겠다는 것이며, api 인증 방식인
+								// JwtAuthenticationFilter에 정의된 방식으로 인증처리를 진행함. 
 		.addFilter(new JwtAuthenticationFilter(authenticationManager(authenticationConfiguration), tokenRepository))
 		.addFilter(new JwtAuthorizationFilter(authenticationManager(authenticationConfiguration), commonRepository, tokenRepository))
 		.requestMatchers().antMatchers("/user/**","/login").and() // 특정 URL에만 Filter를 태우도록 처리함. (jwt)

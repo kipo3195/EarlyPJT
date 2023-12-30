@@ -92,6 +92,7 @@ public class UserController {
 			resultMap.put("flag", "success");
 			resultMap.put("token", response.getHeader("Authorization"));
 		}else {
+			System.out.println("여기호출");
 			resultMap.put("flag", "fail");
 			
 		}

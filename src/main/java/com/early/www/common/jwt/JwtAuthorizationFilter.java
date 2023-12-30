@@ -14,6 +14,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
@@ -67,6 +68,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 	
 		System.out.println("[JwtAuthorizationFilter] 인증이나 권한이 필요한 주소 요청 !");
 		System.out.println("[JwtAuthorizationFilter] requestUrl : "+request.getRequestURI());
+
 		
 		// 사실 인증, 권한이 필요한 주소 뿐아니라 모든 url 요청시 해당 메소드가 호출된다. 
 		// doFilterInternal 내부 로직을 봤을때 header에 JWT token이 있는지 없는지 판단하고 
@@ -77,6 +79,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 		
 		String jwtHeader = null; 
 		String username = null;
+		
 		// access token 
 		if(request.getHeader("Authorization") != null) {
 			jwtHeader = request.getHeader("Authorization");
@@ -88,7 +91,6 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 			}
 			// jwt header에 넘어온 token을 통해서 정상적인 사용자인지 체킹
 			String jwtToken = jwtHeader.replace("Bearer ", "");
-		
 			
 			try {
 				 
@@ -168,6 +170,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 			}
 			
 			
+			
 			// 서명이 정상적 20231214 여기 이하 로직 정리
 			// access 토큰에서 추출한 id를 DB에 검증한다면 jwt를 사용하는 이유가 없음. 해당 부분에서 SecurityContextHolder에 저장해야되는지 검증하기
 			// 저장하지 않아도 된다면 DB 조회로직 제거 
@@ -194,23 +197,30 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 				
 				PrincipalDetails principalDetails = new PrincipalDetails(userEntity);
 				
-				// JWT TOKEN 서명이 정상일때 Authentication 객체를 생성하는 방법.
-				// 실제로 로그인을 진행하는것이 아니라 Authentication 객체를 임의로 생성하는 것임. 
-				// username이 null이 아니라는 것은 정상적으로 인증이되었다는 것이므로 password자리에 null
-				// 권한은 알려줘야함. principalDetails.getAuthorities()
-				Authentication authentication = new UsernamePasswordAuthenticationToken(principalDetails, null, principalDetails.getAuthorities());
-				System.out.println(" principalDetails.getAuthorities() : " +  principalDetails.getAuthorities());
-				// security session 공간에 강제로 접근하여 authentication 객체 저장
+				// 20231230 아래의 로직들이 주석처리 된 이유
+				// SecurityContextHolder, security에서 제공하는 Filter chain을 학습했을때 
+				// SecurityContextHolder영역은 ThreadLocal이기 때문에 하나의 요청에 대하여 Filter chain 간에서만 동일한 Authentication에 접근 가능하다.
+				// 즉 현재의 로직상에서는 사용하지 않는다. 
 				
-				SecurityContextHolder.getContext().setAuthentication(authentication);
+				// JWT TOKEN 서명이 정상일때 Authentication 객체를 생성하는 이유?
+				// JwtAuthentication처럼 실제로 사용자 정보에 기반한 Authentication 객체를 생성하는 것이 아니라 임의의 Authentication를 생성하는 것임. 
+				// username이 null이 아니라는 것은 정상적으로 인증이되었다는 것이므로 password 자리에 null, 권한은 알려줘야함. principalDetails.getAuthorities()
+				// 이하 로직을 실행시키는 것이 임의의 Authentication를 만드는 것.
+				// Authentication authentication = new UsernamePasswordAuthenticationToken(principalDetails, null, principalDetails.getAuthorities());
+				
+				// System.out.println(" principalDetails.getAuthorities() : " +  principalDetails.getAuthorities());
+				
+				// security session 공간에 접근하여 authentication 객체 저장
+				// SecurityContextHolder.getContext().setAuthentication(authentication);
+				
 				request.setAttribute("username", username);
 			}
 		
 		
-		}else if(request.getRequestURI().equals("/login")) {
-			System.out.println("[JwtAuthorizationFilter] 로그인");
-			
-			//로그인시 필요한 데이터를 내려 줄 수 있음. 
+		}else if(SecurityContextHolder.getContext().getAuthentication() != null && request.getRequestURI().equals("/login")) {
+			// 20231230 기준 SecurityContextHolder.getContext().setAuthentication 하는 로직은 로그인 성공시 뿐이다.
+			System.out.println("[JwtAuthorizationFilter] 로그인 요청 ");		
+
 		}else {
 			System.out.println("[JwtAuthorizationFilter] access token 없음");
 			response.addHeader("error_code", "403");
