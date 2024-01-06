@@ -13,4 +13,10 @@ public interface CommonService {
 	// 로그인 
 	public abstract boolean login(String username, String password);
 
+	// redis 테스트 - set
+	public abstract void testRedisSet(String data);
+	
+	// redis 테스트 get
+	public abstract void testRedisGet(String data);
+	
 }

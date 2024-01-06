@@ -1,6 +1,10 @@
 package com.early.www.common.service;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +20,9 @@ public class CommonServiceImpl implements CommonService {
 	
 	@Autowired
 	BCryptPasswordEncoder passwordEncoder;
+	
+	@Autowired
+	RedisTemplate<String, Object> redisTemplate;
 	
 	@Override
 	public String userJoin(EarlyUser user) {
@@ -71,6 +78,32 @@ public class CommonServiceImpl implements CommonService {
 			return false;
 		}
 	}
+	
+	@Override
+	public void testRedisSet(String data) {
+
+		System.out.println("Commonservice testRedisSet data : " + data);
+		
+		long result = redisTemplate.opsForSet().add(data, data);
+		
+		System.out.println("Commonservice testRedisSet data : " + data + ", result : " + result);
+	}
+
+	@Override
+	public void testRedisGet(String data) {
+
+		System.out.println("Commonservice testRedisGet data : " + data);
+		
+		// 데이터를 꺼내버림
+		String result = (String) redisTemplate.opsForSet().pop(data);
+		
+		// set에 저장된 모든 데이터를 가져옴. 
+		//Set<Object> resultSet = redisTemplate.opsForSet().members(data);
+		
+		System.out.println("Commonservice testRedisGet data : " + data + ", result : " + result);
+		
+	}
 
 
 }
+
