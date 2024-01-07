@@ -3,6 +3,7 @@ package com.early.www.chat.controller;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -53,6 +54,8 @@ public class UserChatController {
 
 				List<String> list = new ArrayList<String>();
 				
+				// chatList 만들때 chatRoom 객체에 읽지않은 건수 추가 TODO
+				
 				// 객체를 json형태의 String으로 변환 
 				for(int i = 0; i < chatList.size(); i++) {
 					ChatRoom chatObj = chatList.get(i);
@@ -83,35 +86,47 @@ public class UserChatController {
 	// 채팅 발송
 	private final SimpMessagingTemplate simpMessagingTemplate;
 
-	@MessageMapping("/test/message")
+	@MessageMapping("/user/chat")
 	public void handle(ChatMain main) {
 		
+		/* 데이터 검증 */
 		if(main == null || StringUtils.isEmpty(main.getChatReceiver()) || StringUtils.isEmpty(main.getChatRoomKey()) || StringUtils.isEmpty(main.getChatSender())) {
 			System.out.println("[UserChatController] send data check !");
 			return;
 		}
-		// DB 저장 --- TODO 채팅 내용 암호화
-		chatService.putChatMain(main);
 		
-		// 검증 완료된 파라미터
+		/* 검증된 데이터 */ 
 		String roomKey = main.getChatRoomKey();
 		String receiver = main.getChatReceiver();
 		String sender = main.getChatSender();
 		String data = main.getChatContents();
 		
+		/* 라인키 생성 및 DB 저장 --- TODO 채팅 내용 암호화  */ 
+		String lineKey = chatService.putChatMain(main);
+		
+		/* 건수 처리 - redis */ 
+		Map<String, JSONObject> unreadMap = chatService.putChatUnreadCnt(roomKey, receiver, sender, lineKey);
+		
+		/* 웹소켓 발송 */
 		// 전달 할 채팅 데이터 json 생성
-		JSONObject chatData = new JSONObject();
-		chatData.put("chatRoomKey", roomKey);
-		chatData.put("chatContents", data);
-		chatData.put("chatSender", sender);
+		JSONObject sendData = new JSONObject();
+		sendData.put("chatRoomKey", roomKey);
+		sendData.put("chatContents", data);
+		sendData.put("chatSender", sender);
 
 		// 보낼 경로 설정
 		String dest = "/topic/room/"+roomKey;
-
-		// 발송
-		simpMessagingTemplate.convertAndSend(dest, chatData.toJSONString());
+		
+		// 발송 - chatData 
+		simpMessagingTemplate.convertAndSend(dest, sendData.toJSONString());
 		
 		
+		// 발송 - unreadCount 
+		Iterator<String> unreadIter = unreadMap.keySet().iterator();
+		while(unreadIter.hasNext()) {
+			String recvUser = unreadIter.next();
+			simpMessagingTemplate.convertAndSend("/topic/user/"+recvUser, unreadMap.get(recvUser).toJSONString());
+		}
 		
 		// 20231225 이전 방식 
 		// 기존 채팅데이터를 보고 receiver를 구독하는 사용자에게 주도록 처리하던 것을 room을 구독하는 사용자에게 주도록 처리함. 
@@ -126,8 +141,8 @@ public class UserChatController {
 		
 		// STOMP를 통한 데이터 전송
 		//for(int i = 0; i< recvIds.length; i++) {
-			
-	
+
+		
 //			System.out.println(roomKey);
 //			String dest = "/topic/room/"+roomKey;
 //
@@ -158,6 +173,8 @@ public class UserChatController {
 		if(!StringUtils.isEmpty(chatRoomKey)) { 
 			
 			List<ChatMain> lineList = chatService.getChatRoomLine(chatRoomKey);
+			
+			// chatList 만들때 ChatMain 객체에 읽지않은 건수 추가 TODO
 			
 			// System.out.println(lineList);
 			if(lineList != null && !lineList.isEmpty()) {
@@ -213,6 +230,8 @@ public class UserChatController {
 					ObjectMapper mapper = new ObjectMapper();
 					
 					List<String> list = new ArrayList<String>();
+					
+					// chatList 만들때 ChatMain 객체에 읽지않은 건수 추가 TODO
 					
 					// 객체를 json형태의 String으로 변환 
 					for(int i = 0; i < lineList.size(); i++) {

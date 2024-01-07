@@ -1,6 +1,5 @@
 package com.early.www.common.service;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,11 +81,18 @@ public class CommonServiceImpl implements CommonService {
 	@Override
 	public void testRedisSet(String data) {
 
-		System.out.println("Commonservice testRedisSet data : " + data);
+		System.out.println("1 Commonservice testRedisSet data : " + data);
 		
-		long result = redisTemplate.opsForSet().add(data, data);
+		long result = redisTemplate.opsForSet().add("test@naver.com|roomkey1", data);
 		
-		System.out.println("Commonservice testRedisSet data : " + data + ", result : " + result);
+		System.out.println("2 Commonservice testRedisSet data : " + data + ", result : " + result);
+		
+		long unreadCnt = redisTemplate.opsForSet().size("test@naver.com|roomkey1");
+		
+		System.out.println("3 Commonservice testRedisSet data : " + data + ", unreadCnt : " + unreadCnt);
+		
+	
+		
 	}
 
 	@Override
@@ -94,14 +100,16 @@ public class CommonServiceImpl implements CommonService {
 
 		System.out.println("Commonservice testRedisGet data : " + data);
 		
-		// 데이터를 꺼내버림
-		String result = (String) redisTemplate.opsForSet().pop(data);
+		Set<Object> values = redisTemplate.opsForSet().members("bse3808@gmail.com|R_231212225204942");		
+
+		for(int i = 0 ; i < values.size(); i++) {
+			redisTemplate.opsForSet().pop("bse3808@gmail.com|R_231212225204942");
+		}
 		
-		// set에 저장된 모든 데이터를 가져옴. 
-		//Set<Object> resultSet = redisTemplate.opsForSet().members(data);
 		
-		System.out.println("Commonservice testRedisGet data : " + data + ", result : " + result);
+		long result = redisTemplate.opsForSet().size("bse3808@gmail.com|R_231212225204942");		
 		
+		System.out.println("Commonservice testRedisGet result : " + result);
 	}
 
 

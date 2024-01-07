@@ -40,6 +40,7 @@ public class RedisConfig {
 		
 		// value를 String 형태로 저장할 수 있도록 
 		redisTemplate.setValueSerializer(new StringRedisSerializer());
+		redisTemplate.setHashValueSerializer(new StringRedisSerializer());
 
 		// json
 		// redisTemplate.setValueSerializer(springSessionDefaultRedisSerializer());

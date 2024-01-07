@@ -1,11 +1,15 @@
 package com.early.www.chat.service;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
+import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import com.early.www.chat.model.ChatMain;
@@ -21,6 +25,9 @@ public class ChatSericeImpl implements ChatService {
 	
 	@Autowired
 	ChatMainRepository chatMainRepository;
+	
+	@Autowired
+	RedisTemplate<String, Object> redisTemplate;
 	
 	// line key 생성
 	public String makeLineKey() {
@@ -45,14 +52,14 @@ public class ChatSericeImpl implements ChatService {
 	
 	//채팅 라인 저장
 	@Override
-	public void putChatMain(ChatMain main) {
+	public String putChatMain(ChatMain main) {
 		String lineKey = makeLineKey();
 		main.setChatLineKey(lineKey);
-		main.setChatDelFlag("N");
 		main.setSendDate(lineKey);
+		main.setChatDelFlag("N");
 		System.out.println("[ChatSericeImpl] main : " + main);
 		chatMainRepository.save(main);
-		
+		return lineKey;
 	}
 
 	// 채팅방 데이터 조회 (최초)
@@ -71,6 +78,65 @@ public class ChatSericeImpl implements ChatService {
 		List<ChatMain> chatMainList = chatMainRepository.findByChatRoomKeyAndLineKey(chatRoomKey, lineKey);
 		
 		return chatMainList;
+	}
+
+
+	// 채팅 발송시 unreadcount 처리 
+	@Override
+	public Map<String, JSONObject> putChatUnreadCnt(String roomKey, String receiver, String sender, String lineKey) {
+		
+		// 수신자 파싱
+		String[] receivers = receiver.split("[|]");
+		
+		// 사용자 : {}
+		Map<String, JSONObject> map = new HashMap<>();
+		
+		for(int i = 0; i < receivers.length; i++) {
+			// 발신자는 빼고 
+			if(receivers[i].equals(sender)) {
+				continue;
+			}
+			
+			JSONObject unreadJson = new JSONObject();
+			
+			// 20240107
+			
+			// 수신자의 해당 룸의 라인 별 저장 -> 해당 라인의 읽지않은 사용자 수 구할때 사용 
+			String line = roomKey+"|"+lineKey;
+			redisTemplate.opsForSet().add(line, receivers[i]);
+			// cf. 라인 읽음 처리는 라인 조회시마다 아래 처리
+			// redisTemplate.opsForSet().remove("roomKey|linekey", 읽은 사람 ID);		
+			// long result = redisTemplate.opsForSet().size("roomKey|linekey");
+			// 조회시 DB에서 linekey 뽑아서 읽음 처리 후 result(건수) 를 라인 객체에 넣어줘야함. 
+			// 건수만 표시하고 누가 안읽었는지는 표시하지 않는다. 
+
+			
+			// 수신자의 특정방 미확인 라인 저장 
+			String room = receivers[i]+"|"+roomKey;
+			redisTemplate.opsForSet().add(room, lineKey);
+			
+			// 수신자의 특정방 미확인 건수 가져오기 
+			long roomCnt = redisTemplate.opsForSet().size(room);
+			unreadJson.put("room", roomKey+"|"+roomCnt);
+
+			
+			// 수신자의 특정방의 미확인 건수 저장 -> 수신자의 전체 미확인 건수 구할때 사용 
+			redisTemplate.opsForHash().put(receivers[i], roomKey, String.valueOf(roomCnt));
+			
+			// 수신자의 전체 읽지 않은 건수 구하기
+			Map<Object, Object> userAllRooms = redisTemplate.opsForHash().entries(receivers[i]);
+			Iterator<Object> iter = userAllRooms.keySet().iterator();
+			int unreadCnt = 0;
+			while(iter.hasNext()) {
+				unreadCnt += Integer.parseInt((String) userAllRooms.get((String) iter.next()));
+			}
+			unreadJson.put("chat", unreadCnt);
+			
+			map.put(receivers[i], unreadJson);
+		}
+		
+		return map;
+		
 	}
 	
 	
