@@ -3,6 +3,7 @@ package com.early.www.user.controller;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.early.www.chat.service.ChatService;
 import com.early.www.common.service.CommonService;
 import com.early.www.user.model.EarlyUser;
 
@@ -21,6 +23,9 @@ public class UserController {
 	
 	@Autowired
 	CommonService service;
+	
+	@Autowired
+	ChatService chatService;
 
 	// react axios 테스트
 	@GetMapping("/user/random")
@@ -82,15 +87,20 @@ public class UserController {
 	// 로그인 요청 API
 	@PostMapping("/login")
 	@ResponseBody
-	public Map<String, String> loginRequest(String username, String password, String token, HttpServletResponse response) {
+	public Map<String, String> loginRequest(String username, String password, String token, HttpServletResponse response, HttpServletRequest request) {
 		
 		System.out.println("[UserController] loginRequest ");
 		Map<String, String> resultMap = new HashMap<String, String>();
 		
 		if(response.getHeader("Authorization") != null) {
-			//System.out.println("[UserController] Authorization : " + response.getHeader("Authorization"));
+			username = (String) request.getAttribute("username");
+			// 채팅, 쪽지의 미확인 건수 조회 
+			Map<String, String> allUnreadMap = chatService.getAllUnreadCnt(username);
+			
 			resultMap.put("flag", "success");
 			resultMap.put("token", response.getHeader("Authorization"));
+			resultMap.put("chat", allUnreadMap.get("chat"));
+			//resultMap.put("msg", allUnreadMap.get("msg"));
 		}else {
 			System.out.println("여기호출");
 			resultMap.put("flag", "fail");

@@ -81,7 +81,7 @@ public class ChatSericeImpl implements ChatService {
 	}
 
 
-	// 채팅 발송시 unreadcount 처리 
+	// 채팅 발송시 unreadcount 전달 
 	@Override
 	public Map<String, JSONObject> putChatUnreadCnt(String roomKey, String receiver, String sender, String lineKey) {
 		
@@ -131,13 +131,38 @@ public class ChatSericeImpl implements ChatService {
 				unreadCnt += Integer.parseInt((String) userAllRooms.get((String) iter.next()));
 			}
 			unreadJson.put("chat", unreadCnt);
+			unreadJson.put("type", "chat");
 			
+			// 결과 json { "type":"chat", "chat":"전체건수", "room":"신규 채팅 roomKey|미확인 건수"}
 			map.put(receivers[i], unreadJson);
 		}
 		
 		return map;
 		
 	}
+
+	// 로그인 시 사용자의 미확인 건수(채팅, 쪽지)를 전달함.
+	@Override
+	public Map<String, String> getAllUnreadCnt(String username) {
+		
+		Map<String, String> map = new HashMap<>();
+
+		// hash 형식
+		// hash  = userID
+		// key   = roomKey : value = count(int)
+		Map<Object, Object> userAllRooms = redisTemplate.opsForHash().entries(username);
+		if(userAllRooms != null && !userAllRooms.isEmpty()) {
+			Iterator<Object> iter = userAllRooms.keySet().iterator();
+			int unreadCnt = 0;
+			while(iter.hasNext()) {
+				unreadCnt += Integer.parseInt((String) userAllRooms.get((String) iter.next()));
+			}
+			map.put("chat", String.valueOf(unreadCnt));
+		}
+		
+		return map;
+	}
+	
 	
 	
 	

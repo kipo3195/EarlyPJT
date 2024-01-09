@@ -122,6 +122,7 @@ public class UserChatController {
 		
 		
 		// 발송 - unreadCount 
+		// 채팅방의 수신자의 채팅 미확인 전체 건수 & 해당 채팅방의 건수 알려줌 
 		Iterator<String> unreadIter = unreadMap.keySet().iterator();
 		while(unreadIter.hasNext()) {
 			String recvUser = unreadIter.next();

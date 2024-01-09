@@ -220,7 +220,14 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 		}else if(SecurityContextHolder.getContext().getAuthentication() != null && request.getRequestURI().equals("/login")) {
 			// 20231230 기준 SecurityContextHolder.getContext().setAuthentication 하는 로직은 로그인 성공시 뿐이다.
 			System.out.println("[JwtAuthorizationFilter] 로그인 요청 ");		
-
+			
+			// redis에서 미확인 건수 조회용 -> AuthentificationFilter에서 setAuthentication 에서 사용자 객체의 username 뽑기.
+			// 사용자 id를 가져오려면 AuthentificationFilter에서 cookie에 접근 해야됨(request나 response 영역에 set)
+			// 그것보다는 필터간 공유 영역인  SecurityContextHolder 영역에 접근하여 데이터를 가져오도록 처리함. 
+			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+			PrincipalDetails user = (PrincipalDetails) authentication.getPrincipal();
+			username = user.getEarlyUser().getUsername();
+			request.setAttribute("username", username);
 		}else {
 			System.out.println("[JwtAuthorizationFilter] access token 없음");
 			response.addHeader("error_code", "403");
