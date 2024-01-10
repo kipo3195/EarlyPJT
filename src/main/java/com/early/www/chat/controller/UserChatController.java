@@ -43,10 +43,11 @@ public class UserChatController {
 		
 		String username = (String) request.getAttribute("username");
 
-		System.out.println("[UserChatController] user name is : "+ username);
 		Map<String, String> resultMap = new HashMap<String, String>();
 		
 		if(username != null && !username.isEmpty()) {
+			
+			// 읽지않은 건수 함께 조회
 			List<ChatRoom> chatList = chatService.getMyChatList(username);
 			if(chatList != null && !chatList.isEmpty()) {
 				
@@ -66,9 +67,6 @@ public class UserChatController {
 						e.printStackTrace();
 					}
 				}
-				
-				System.out.println(list);
-				
 				
 				resultMap.put("chat_list", list.toString());
 			}else {

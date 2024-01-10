@@ -36,5 +36,7 @@ public class ChatRoom {
 	@Column(name="last_line_key", nullable=false, length=30)
 	private String lastLineKey;
 	
+	@Column(name="unread_count", length=4)
+	private String unreadCount;
 
 }

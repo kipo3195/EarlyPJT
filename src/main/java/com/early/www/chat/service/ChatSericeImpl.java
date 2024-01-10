@@ -45,6 +45,17 @@ public class ChatSericeImpl implements ChatService {
 	public List<ChatRoom> getMyChatList(String username) {
 		
 		List<ChatRoom> chatList = chatRoomRepository.findByChatListUser(username);
+		if(chatList != null && !chatList.isEmpty()) {
+			
+			for(int i=0; i < chatList.size(); i++) {
+				String room = username +"|"+chatList.get(i).getChatRoomKey();
+				// 읽지 않은 건수 조회 하여 chatRoom에 set 처리
+				long roomCnt = redisTemplate.opsForSet().size(room);
+				chatList.get(i).setUnreadCount(String.valueOf(roomCnt));
+				System.out.println(chatList.get(i));
+			}
+			
+		}
 		
 		return chatList;
 	}
@@ -111,7 +122,7 @@ public class ChatSericeImpl implements ChatService {
 			// 건수만 표시하고 누가 안읽었는지는 표시하지 않는다. 
 
 			
-			// 수신자의 특정방 미확인 라인 저장 
+			// 수신자의 특정방 미확인 건수 저장 
 			String room = receivers[i]+"|"+roomKey;
 			redisTemplate.opsForSet().add(room, lineKey);
 			
