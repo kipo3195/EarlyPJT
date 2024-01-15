@@ -102,8 +102,11 @@ public class UserChatController {
 		/* 라인키 생성 및 DB 저장 --- TODO 채팅 내용 암호화  */ 
 		String lineKey = chatService.putChatMain(main);
 		
-		/* 건수 처리 - redis */ 
+		/* redis 건수 저장 및 사용자 별 전체 건수 & 해당 방의 건수 조회 */ 
 		Map<String, JSONObject> unreadMap = chatService.putChatUnreadCnt(roomKey, receiver, sender, lineKey);
+		
+		/* redis 해당 라인의 읽지않은 건수 조회 */
+		String unreadCount = chatService.getUnreadCount(roomKey, lineKey);
 		
 		/* 웹소켓 발송 */
 		// 전달 할 채팅 데이터 json 생성
@@ -111,6 +114,8 @@ public class UserChatController {
 		sendData.put("chatRoomKey", roomKey);
 		sendData.put("chatContents", data);
 		sendData.put("chatSender", sender);
+		sendData.put("chatUnreadCount", unreadCount);
+		
 
 		// 보낼 경로 설정
 		String dest = "/topic/room/"+roomKey;
@@ -162,7 +167,7 @@ public class UserChatController {
 	public Map<String, String> getChatRoomLine(HttpServletRequest request, @RequestBody ChatRoom chatRoom) {
 		Map<String, String> resultMap = new HashMap<String, String>();
 
-		// 토큰에서 가져온 데이터
+		// 토큰에서 가져온 데이터 - username을 못가져오는 이유? -> access 토큰을 갱신하지 않음. 
 		String username = (String) request.getAttribute("username");
 		
 		String chatRoomKey = chatRoom.getChatRoomKey();

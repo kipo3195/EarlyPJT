@@ -22,4 +22,6 @@ public interface ChatService {
 	public Map<String, JSONObject> putChatUnreadCnt(String roomKey, String receiver, String sender, String lineKey);
 	
 	public Map<String, String> getAllUnreadCnt(String username);
+
+	public String getUnreadCount(String roomKey, String lineKey);
 }

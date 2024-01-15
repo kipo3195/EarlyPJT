@@ -61,5 +61,7 @@ public class ChatMain{
 	@ColumnDefault("'N'")
 	private String chatDelFlag;
 	
+	@Column(name="chat_unread_count", length=5)
+	private String chatUnreadCount;
 	
 }

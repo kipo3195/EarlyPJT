@@ -94,6 +94,7 @@ public class UserController {
 		
 		if(response.getHeader("Authorization") != null) {
 			username = (String) request.getAttribute("username");
+			System.out.println("userController : " + username);
 			// 채팅, 쪽지의 미확인 건수 조회 
 			Map<String, String> allUnreadMap = chatService.getAllUnreadCnt(username);
 			

@@ -9,7 +9,11 @@ import java.util.Map;
 
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Service;
 
 import com.early.www.chat.model.ChatMain;
@@ -79,14 +83,37 @@ public class ChatSericeImpl implements ChatService {
 		
 		List<ChatMain> chatMainList = chatMainRepository.findByChatRoomKey(chatRoomKey);
 		
+		RedisSerializer keySerializer = redisTemplate.getKeySerializer();
+		redisTemplate.execute(new RedisCallback<Object>() {
+
+			@Override
+			public Object doInRedis(RedisConnection connection) throws DataAccessException {
+				
+				// 라인의 미확인 건수 추가
+				for(int i = 0; i < chatMainList.size(); i++) {
+					String line = chatRoomKey+"|"+chatMainList.get(i).getChatLineKey();
+					Long unreadCount = connection.sCard(keySerializer.serialize(line));
+					chatMainList.get(i).setChatUnreadCount(String.valueOf(unreadCount));
+				}
+
+				return null;
+			}
+			
+		});
+		
 		return chatMainList;
 	}
 
 	// 채팅방 데이터 조회 (최초 이후)
 	@Override
 	public List<ChatMain> getChatRoomLineAppend(String chatRoomKey, String lineKey) {
-		
+		// 라인의 미확인 건수 추가
 		List<ChatMain> chatMainList = chatMainRepository.findByChatRoomKeyAndLineKey(chatRoomKey, lineKey);
+		for(int i = 0; i < chatMainList.size(); i++) {
+			String line = chatRoomKey+"|"+chatMainList.get(i).getChatLineKey();
+			long unreadCount = redisTemplate.opsForSet().size(line);
+			chatMainList.get(i).setChatUnreadCount(String.valueOf(unreadCount));
+		}
 		
 		return chatMainList;
 	}
@@ -173,6 +200,22 @@ public class ChatSericeImpl implements ChatService {
 		
 		return map;
 	}
+
+	// 해당 라인의 미확인 건수 구함
+	@Override
+	public String getUnreadCount(String roomKey, String lineKey) {
+		
+		String result = "0";
+		
+		String line = roomKey+"|"+lineKey;
+		long unreadCount = redisTemplate.opsForSet().size(line);
+		
+		result = String.valueOf(unreadCount);
+		
+		return result;
+	}
+	
+	
 	
 	
 	
