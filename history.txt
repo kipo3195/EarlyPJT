@@ -162,3 +162,6 @@
 	1. 채팅방 입장시 라인 별 미확인 사용자 건수 조회 후 response
 	2. spring - redis pipeline 추가 		
 	3. ChatMain Entity에 미확인 건수 필드 추가
+	
+2024.01.20
+	1. 토큰 검증 프로세스를 수정하기 위한 JwtAuthorizationFilterV2 객체 생성

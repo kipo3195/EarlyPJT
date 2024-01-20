@@ -8,18 +8,15 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpRequest;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.early.www.chat.model.ChatMain;
@@ -164,9 +161,12 @@ public class UserChatController {
 	
 	// 채팅방의 라인 조회
 	@PostMapping("/user/chatRoomLine")										// body 데이터
-	public Map<String, String> getChatRoomLine(HttpServletRequest request, @RequestBody ChatRoom chatRoom) {
+	public Map<String, String> getChatRoomLine(HttpServletRequest request, @RequestBody ChatRoom chatRoom, HttpServletResponse response) {
 		Map<String, String> resultMap = new HashMap<String, String>();
-
+		
+		String error = (String) response.getHeader("error_code");
+		System.out.println("getChatRoomLine : " + error);
+		
 		// 토큰에서 가져온 데이터 - username을 못가져오는 이유? -> access 토큰을 갱신하지 않음. 
 		String username = (String) request.getAttribute("username");
 		
