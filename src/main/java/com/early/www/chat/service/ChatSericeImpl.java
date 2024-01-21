@@ -56,7 +56,7 @@ public class ChatSericeImpl implements ChatService {
 				// 읽지 않은 건수 조회 하여 chatRoom에 set 처리
 				long roomCnt = redisTemplate.opsForSet().size(room);
 				chatList.get(i).setUnreadCount(String.valueOf(roomCnt));
-				System.out.println(chatList.get(i));
+//				System.out.println(chatList.get(i));
 			}
 			
 		}

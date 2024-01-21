@@ -36,53 +36,60 @@ public class UserChatController {
 	
 	// 채팅방 리스트 조회 
 	@PostMapping("/user/chatList")
-	public Map<String, String> chatList(HttpServletRequest request){
-		
-		String username = (String) request.getAttribute("username");
-
+	public Map<String, String> chatList(HttpServletRequest request, HttpServletResponse response){
 		Map<String, String> resultMap = new HashMap<String, String>();
 		
-		if(username != null && !username.isEmpty()) {
-			
-			// 읽지않은 건수 함께 조회
-			List<ChatRoom> chatList = chatService.getMyChatList(username);
-			if(chatList != null && !chatList.isEmpty()) {
-				
-				ObjectMapper mapper = new ObjectMapper();
-
-				List<String> list = new ArrayList<String>();
-				
-				// chatList 만들때 chatRoom 객체에 읽지않은 건수 추가 TODO
-				
-				// 객체를 json형태의 String으로 변환 
-				for(int i = 0; i < chatList.size(); i++) {
-					ChatRoom chatObj = chatList.get(i);
-					
-					try {
-						list.add(mapper.writeValueAsString(chatObj));
-					} catch (JsonProcessingException e) {
-						e.printStackTrace();
-					}
-				}
-				
-				resultMap.put("chat_list", list.toString());
-			}else {
-				// 채팅리스트가 없음 
-				resultMap.put("chat_list", "C404");
-			}
+		String error = (String) response.getHeader("error_code");
+		if(error != null) {
+			resultMap.put("flag", "fail");
+			resultMap.put("error_code", response.getHeader("error_code"));
 		}else {
-			resultMap.put("chat_list", "C403");
+			
+			String username = (String) request.getAttribute("username");
+			
+			if(username != null && !username.isEmpty()) {
+				
+				// 읽지않은 건수 함께 조회
+				List<ChatRoom> chatList = chatService.getMyChatList(username);
+				if(chatList != null && !chatList.isEmpty()) {
+					
+					ObjectMapper mapper = new ObjectMapper();
+					
+					List<String> list = new ArrayList<String>();
+					
+					// chatList 만들때 chatRoom 객체에 읽지않은 건수 추가 TODO
+					
+					// 객체를 json형태의 String으로 변환 
+					for(int i = 0; i < chatList.size(); i++) {
+						ChatRoom chatObj = chatList.get(i);
+						
+						try {
+							list.add(mapper.writeValueAsString(chatObj));
+						} catch (JsonProcessingException e) {
+							e.printStackTrace();
+						}
+					}
+					
+					resultMap.put("chat_list", list.toString());
+				}else {
+					// 채팅리스트가 없음 
+					resultMap.put("chat_list", "C404");
+				}
+			}else {
+				resultMap.put("chat_list", "C403");
+			}
 		}
 		
 		return resultMap;
 	}
 	
 
-	// 채팅 발송
 	private final SimpMessagingTemplate simpMessagingTemplate;
 
+	// 채팅 발송 - error 체크 하지 않는 이유? 웹소켓 연결 자체가 http 프로토콜이 아니기 때문에, 그리고 로그인이 검증되야 웹소켓을 연결 할 수 있으므로
 	@MessageMapping("/user/chat")
 	public void handle(ChatMain main) {
+		
 		
 		/* 데이터 검증 */
 		if(main == null || StringUtils.isEmpty(main.getChatReceiver()) || StringUtils.isEmpty(main.getChatRoomKey()) || StringUtils.isEmpty(main.getChatSender())) {
@@ -165,49 +172,59 @@ public class UserChatController {
 		Map<String, String> resultMap = new HashMap<String, String>();
 		
 		String error = (String) response.getHeader("error_code");
-		System.out.println("getChatRoomLine : " + error);
-		
-		// 토큰에서 가져온 데이터 - username을 못가져오는 이유? -> access 토큰을 갱신하지 않음. 
-		String username = (String) request.getAttribute("username");
-		
-		String chatRoomKey = chatRoom.getChatRoomKey();
-		
-		System.out.println(username + " : " + chatRoomKey);
-		
-		if(!StringUtils.isEmpty(chatRoomKey)) { 
+		if(error != null) {
+			resultMap.put("flag", "fail");
+			resultMap.put("error_code", response.getHeader("error_code"));
+		}else {
 			
-			List<ChatMain> lineList = chatService.getChatRoomLine(chatRoomKey);
+			// 토큰에서 가져온 데이터
+			String username = (String) request.getAttribute("username");
 			
-			// chatList 만들때 ChatMain 객체에 읽지않은 건수 추가 TODO
-			
-			// System.out.println(lineList);
-			if(lineList != null && !lineList.isEmpty()) {
-				ObjectMapper mapper = new ObjectMapper();
+			if(username != null && !username.isEmpty()) {
 				
-				List<String> list = new ArrayList<String>();
+				String chatRoomKey = chatRoom.getChatRoomKey();
 				
-				// 객체를 json형태의 String으로 변환 
-				for(int i = 0; i < lineList.size(); i++) {
-					ChatMain chatMain = lineList.get(i);
+				System.out.println(username + " : " + chatRoomKey);
+				
+				if(!StringUtils.isEmpty(chatRoomKey)) { 
 					
-					try {
-						list.add(mapper.writeValueAsString(chatMain));
-					} catch (JsonProcessingException e) {
-						e.printStackTrace();
+					List<ChatMain> lineList = chatService.getChatRoomLine(chatRoomKey);
+					
+					// chatList 만들때 ChatMain 객체에 읽지않은 건수 추가 TODO
+					
+					// System.out.println(lineList);
+					if(lineList != null && !lineList.isEmpty()) {
+						ObjectMapper mapper = new ObjectMapper();
+						
+						List<String> list = new ArrayList<String>();
+						
+						// 객체를 json형태의 String으로 변환 
+						for(int i = 0; i < lineList.size(); i++) {
+							ChatMain chatMain = lineList.get(i);
+							
+							try {
+								list.add(mapper.writeValueAsString(chatMain));
+							} catch (JsonProcessingException e) {
+								e.printStackTrace();
+							}
+						}
+						
+						resultMap.put("chatRoomLine", list.toString());
+						// 다음 요청의 기준이되는 라인키 생성
+						if(list.size() > 0) {
+							resultMap.put("nextLine", lineList.get(0).getChatLineKey());
+						}else {
+							resultMap.put("nextLine", "0");
+						}
 					}
 				}
-				
-				resultMap.put("chatRoomLine", list.toString());
-				// 다음 요청의 기준이되는 라인키 생성
-				if(list.size() > 0) {
-					resultMap.put("nextLine", lineList.get(0).getChatLineKey());
-				}else {
-					resultMap.put("nextLine", "0");
-				}
+			}else {
+				// 토큰은 검증했지만 username이 없는경우?
 				
 			}
 			
 		}
+		
 		
 		return resultMap;
 	}
@@ -215,51 +232,63 @@ public class UserChatController {
 	
 		// 채팅방의 라인 추가조회
 		@PostMapping("/user/chatRoomLineAppend")										// body 데이터
-		public Map<String, String> getChatRoomLineAppend(HttpServletRequest request, @RequestBody ChatRoom chatRoom) {
+		public Map<String, String> getChatRoomLineAppend(HttpServletRequest request, @RequestBody ChatRoom chatRoom, HttpServletResponse response) {
 			Map<String, String> resultMap = new HashMap<String, String>();
-
-			// 토큰에서 가져온 데이터
-			String username = (String) request.getAttribute("username");
 			
-			String chatRoomKey = chatRoom.getChatRoomKey();
-			String nextLine = chatRoom.getLastLineKey();
-			
-			System.out.println(username + " : " + chatRoomKey + " : " + nextLine);
-			
-			if(!StringUtils.isEmpty(chatRoomKey)) { 
+			String error = (String) response.getHeader("error_code");
+			if(error != null) {
+				resultMap.put("flag", "fail");
+				resultMap.put("error_code", response.getHeader("error_code"));
+			}else {
+				// 토큰에서 가져온 데이터
+				String username = (String) request.getAttribute("username");
 				
-				List<ChatMain> lineList = chatService.getChatRoomLineAppend(chatRoomKey, nextLine);
-				
-				if(lineList != null && !lineList.isEmpty()) {
-					ObjectMapper mapper = new ObjectMapper();
+				if(username != null && !username.isEmpty()) {
 					
-					List<String> list = new ArrayList<String>();
+					String chatRoomKey = chatRoom.getChatRoomKey();
+					String nextLine = chatRoom.getLastLineKey();
 					
-					// chatList 만들때 ChatMain 객체에 읽지않은 건수 추가 TODO
+					System.out.println(username + " : " + chatRoomKey + " : " + nextLine);
 					
-					// 객체를 json형태의 String으로 변환 
-					for(int i = 0; i < lineList.size(); i++) {
-						ChatMain chatMain = lineList.get(i);
+					if(!StringUtils.isEmpty(chatRoomKey)) { 
 						
-						try {
-							list.add(mapper.writeValueAsString(chatMain));
-						} catch (JsonProcessingException e) {
-							e.printStackTrace();
+						List<ChatMain> lineList = chatService.getChatRoomLineAppend(chatRoomKey, nextLine);
+						
+						if(lineList != null && !lineList.isEmpty()) {
+							ObjectMapper mapper = new ObjectMapper();
+							
+							List<String> list = new ArrayList<String>();
+							
+							// chatList 만들때 ChatMain 객체에 읽지않은 건수 추가 TODO
+							
+							// 객체를 json형태의 String으로 변환 
+							for(int i = 0; i < lineList.size(); i++) {
+								ChatMain chatMain = lineList.get(i);
+								
+								try {
+									list.add(mapper.writeValueAsString(chatMain));
+								} catch (JsonProcessingException e) {
+									e.printStackTrace();
+								}
+							}
+							
+							resultMap.put("chatRoomLine", list.toString());
+							
+							// 다음 요청의 기준이되는 라인키 생성
+							if(list.size() > 0) {
+								resultMap.put("nextLine", lineList.get(0).getChatLineKey());
+							}else {
+								resultMap.put("nextLine", "0");
+							}
+							
 						}
+						
 					}
-					
-					resultMap.put("chatRoomLine", list.toString());
-					
-					// 다음 요청의 기준이되는 라인키 생성
-					if(list.size() > 0) {
-						resultMap.put("nextLine", lineList.get(0).getChatLineKey());
-					}else {
-						resultMap.put("nextLine", "0");
-					}
+				}else {
 					
 				}
-				
 			}
+			
 			
 			return resultMap;
 		}

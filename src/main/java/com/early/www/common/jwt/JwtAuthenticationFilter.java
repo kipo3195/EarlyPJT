@@ -104,7 +104,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 			// access token create start
 			String accessToken = JWT.create()
 					.withSubject("accessToken") // TOKEN 이름
-					.withExpiresAt(new Date(System.currentTimeMillis()+(10000))) // 만료시간 10초
+					.withExpiresAt(new Date(System.currentTimeMillis()+(30000))) // 만료시간 10초
 					//.withClaim("id", principalDetails.getEarlyUser().getId())
 					.withClaim("username", principalDetails.getUsername())
 					.sign(Algorithm.HMAC512("early"));  // 서버만 아는 고유한 값이어야함. 

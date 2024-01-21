@@ -165,3 +165,6 @@
 	
 2024.01.20
 	1. 토큰 검증 프로세스를 수정하기 위한 JwtAuthorizationFilterV2 객체 생성
+	
+2024.01.21
+	1. access 검증 로직 분리를 위한 Controller 예외 처리 (username이 null이거나 error_code가 있으면 error_code를 map으로 내려주고, 아니면 비즈니스 로직 수행)
