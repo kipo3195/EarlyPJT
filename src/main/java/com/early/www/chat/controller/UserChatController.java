@@ -103,16 +103,15 @@ public class UserChatController {
 		String sender = main.getChatSender();
 		String data = main.getChatContents();
 		
-		/* 라인키 생성 및 DB 저장 --- TODO 채팅 내용 암호화  */ 
-		String lineKey = chatService.putChatMain(main);
 		
-		/* redis 건수 저장 및 사용자 별 전체 건수 & 해당 방의 건수 조회 */ 
-		Map<String, JSONObject> unreadMap = chatService.putChatUnreadCnt(roomKey, receiver, sender, lineKey);
+		/* 라인키 생성 및 DB 저장 */
+		// TODO 채팅 내용 암호화 및 QueueThread 방식으로 전환 */ 
+		String lineKey = chatService.putChatMain(main); 
 		
-		/* redis 해당 라인의 읽지않은 건수 조회 */
-		String unreadCount = chatService.getUnreadCount(roomKey, lineKey);
 		
-		/* 웹소켓 발송 */
+		/* redis 해당 라인의 읽지 않은 사용자 저장 및 조회 */
+		String unreadCount = chatService.getUnreadLineCount(roomKey, lineKey, receiver, sender);
+		
 		// 전달 할 채팅 데이터 json 생성
 		JSONObject sendData = new JSONObject();
 		sendData.put("chatRoomKey", roomKey);
@@ -120,16 +119,17 @@ public class UserChatController {
 		sendData.put("chatSender", sender);
 		sendData.put("chatUnreadCount", unreadCount);
 		
-
 		// 보낼 경로 설정
 		String dest = "/topic/room/"+roomKey;
-		
-		// 발송 - chatData 
+
+		// 발송 - chatData + 라인의 미확인 건수
 		simpMessagingTemplate.convertAndSend(dest, sendData.toJSONString());
+
 		
+		/* redis 수신자 별 라인 저장 -> 수신자의 채팅방 미확인 건수 저장 -> 수신자의 전체 채팅 미확인 건수 저장 및 전체 건수 조회*/ 
+		Map<String, JSONObject> unreadMap = chatService.getUnreadChatCount(roomKey, receiver, sender, lineKey);
 		
-		// 발송 - unreadCount 
-		// 채팅방의 수신자의 채팅 미확인 전체 건수 & 해당 채팅방의 건수 알려줌 
+		// 발송 - 채팅방의 수신자의 채팅 미확인 전체 건수 & 해당 채팅방의 건수
 		Iterator<String> unreadIter = unreadMap.keySet().iterator();
 		while(unreadIter.hasNext()) {
 			String recvUser = unreadIter.next();
@@ -166,7 +166,7 @@ public class UserChatController {
 	}
 
 	
-	// 채팅방의 라인 조회
+	// 채팅방의 라인 조회 (방 입장)
 	@PostMapping("/user/chatRoomLine")										// body 데이터
 	public Map<String, String> getChatRoomLine(HttpServletRequest request, @RequestBody ChatRoom chatRoom, HttpServletResponse response) {
 		Map<String, String> resultMap = new HashMap<String, String>();
@@ -188,11 +188,11 @@ public class UserChatController {
 				
 				if(!StringUtils.isEmpty(chatRoomKey)) { 
 					
+					/* 입장한 채팅방 읽음처리 */
+					chatService.putChatRoomUnread(chatRoomKey, username);
+					
+					/* 리스트 조회 */
 					List<ChatMain> lineList = chatService.getChatRoomLine(chatRoomKey);
-					
-					// chatList 만들때 ChatMain 객체에 읽지않은 건수 추가 TODO
-					
-					// System.out.println(lineList);
 					if(lineList != null && !lineList.isEmpty()) {
 						ObjectMapper mapper = new ObjectMapper();
 						

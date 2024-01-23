@@ -168,3 +168,18 @@
 	
 2024.01.21
 	1. access 검증 로직 분리를 위한 Controller 예외 처리 (username이 null이거나 error_code가 있으면 error_code를 map으로 내려주고, 아니면 비즈니스 로직 수행)
+	
+2024.01.24
+	1. 신규 채팅 생성시 미확인 건수 저장 로직 설계 수정
+		- 나의 미확인 라인 (ZSET) 
+			저장 ZADD 키워드:roomKey:ID lineKey lineKey
+			조회 ZCARD 키워드:roomKey:ID -> 나의 해당 채팅방의 미확인 건수 
+		- 나의 채팅방 미확인 건수 (HASH)
+			저장 HSET 키워드:ID roomKey '나의 해당 채팅방의 미확인 건수'
+			조회 HGETALL 키워드:ID -> iterator -> 나의 모든 채팅방의 미확인 건수
+		- 나의 채팅 전체 미확인 건수 (HASH)
+			저장 HSET 키워드:ID chat '나의 모든 채팅방의 미확인 건수'	
+		- 특정 라인의 미확인 사용자 수 (SET)
+			저장 SADD 키워드:roomKey:lineKey ID 단, 발신자 제외
+			
+		 	

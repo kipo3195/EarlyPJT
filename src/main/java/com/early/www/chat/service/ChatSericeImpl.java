@@ -95,7 +95,10 @@ public class ChatSericeImpl implements ChatService {
 					Long unreadCount = connection.sCard(keySerializer.serialize(line));
 					chatMainList.get(i).setChatUnreadCount(String.valueOf(unreadCount));
 				}
-
+				
+				if(connection != null) {
+					connection.close();
+				}
 				return null;
 			}
 			
@@ -121,7 +124,7 @@ public class ChatSericeImpl implements ChatService {
 
 	// 채팅 발송시 unreadcount 전달 
 	@Override
-	public Map<String, JSONObject> putChatUnreadCnt(String roomKey, String receiver, String sender, String lineKey) {
+	public Map<String, JSONObject> getUnreadChatCount(String roomKey, String receiver, String sender, String lineKey) {
 		
 		// 수신자 파싱
 		String[] receivers = receiver.split("[|]");
@@ -129,51 +132,56 @@ public class ChatSericeImpl implements ChatService {
 		// 사용자 : {}
 		Map<String, JSONObject> map = new HashMap<>();
 		
-		for(int i = 0; i < receivers.length; i++) {
-			// 발신자는 빼고 
-			if(receivers[i].equals(sender)) {
-				continue;
+			
+		// 20240123
+		
+		RedisSerializer keySerializer = redisTemplate.getKeySerializer();
+		RedisSerializer valueSerializer = redisTemplate.getValueSerializer();
+		RedisSerializer hashKeySerializer = redisTemplate.getHashKeySerializer();
+		RedisSerializer hashValueSerializer = redisTemplate.getHashValueSerializer();
+	
+		
+		redisTemplate.execute(new RedisCallback<Object>() {
+
+			@Override
+			public Object doInRedis(RedisConnection connection) throws DataAccessException {
+				
+				for(int i = 0 ;  i< receivers.length; i++) {
+					if(receivers[i].equals(sender)) {
+						continue;
+					}
+					// 나의 라인 저장 (ZSET)
+					String unreadLine = "myUnreadLine:"+roomKey+":"+receivers[i];
+					connection.zAdd(keySerializer.serialize(unreadLine), Double.parseDouble(lineKey), valueSerializer.serialize(lineKey));
+					// 나의 해당 채팅방 건수 조회 
+					Long lineCount = connection.zCard(keySerializer.serialize(unreadLine));
+					
+					// 나의 해당 채팅방 건수 저장 (HASH)
+					String unreadRoom = "myUnreadRoom:"+receivers[i];
+					connection.hSet(hashKeySerializer.serialize(unreadRoom), hashKeySerializer.serialize(roomKey), hashValueSerializer.serialize(String.valueOf(lineCount)));
+					// 나의 전체 채팅방 건수 조회
+					Map<byte[], byte[]> roomMap = connection.hGetAll(hashKeySerializer.serialize(unreadRoom));
+					Iterator<byte[]> allRoom = roomMap.keySet().iterator();
+					long allCount = 0;
+
+					while(allRoom.hasNext()) {
+						byte[] room = allRoom.next();
+						String value = (String) hashValueSerializer.deserialize(roomMap.get(room));
+						allCount =+ Long.valueOf(value);
+					}
+					
+					String unreadAll = "myUnreadAll:"+receivers[i];
+					// 나의 전체 채팅 건수 저장 (SET)
+					connection.hSet(hashKeySerializer.serialize(unreadAll), hashKeySerializer.serialize("chat"),valueSerializer.serialize(String.valueOf(allCount)));
+				}
+				
+				if(connection != null) {
+					connection.close();
+				}
+				return null;
 			}
 			
-			JSONObject unreadJson = new JSONObject();
-			
-			// 20240107
-			
-			// 수신자의 해당 룸의 라인 별 저장 -> 해당 라인의 읽지않은 사용자 수 구할때 사용 
-			String line = roomKey+"|"+lineKey;
-			redisTemplate.opsForSet().add(line, receivers[i]);
-			// cf. 라인 읽음 처리는 라인 조회시마다 아래 처리
-			// redisTemplate.opsForSet().remove("roomKey|linekey", 읽은 사람 ID);		
-			// long result = redisTemplate.opsForSet().size("roomKey|linekey");
-			// 조회시 DB에서 linekey 뽑아서 읽음 처리 후 result(건수) 를 라인 객체에 넣어줘야함. 
-			// 건수만 표시하고 누가 안읽었는지는 표시하지 않는다. 
-
-			
-			// 수신자의 특정방 미확인 건수 저장 
-			String room = receivers[i]+"|"+roomKey;
-			redisTemplate.opsForSet().add(room, lineKey);
-			
-			// 수신자의 특정방 미확인 건수 가져오기 
-			long roomCnt = redisTemplate.opsForSet().size(room);
-			unreadJson.put("room", roomKey+"|"+roomCnt);
-
-			
-			// 수신자의 특정방의 미확인 건수 저장 -> 수신자의 전체 미확인 건수 구할때 사용 
-			redisTemplate.opsForHash().put(receivers[i], roomKey, String.valueOf(roomCnt));
-			
-			// 수신자의 전체 읽지 않은 건수 구하기
-			Map<Object, Object> userAllRooms = redisTemplate.opsForHash().entries(receivers[i]);
-			Iterator<Object> iter = userAllRooms.keySet().iterator();
-			int unreadCnt = 0;
-			while(iter.hasNext()) {
-				unreadCnt += Integer.parseInt((String) userAllRooms.get((String) iter.next()));
-			}
-			unreadJson.put("chat", unreadCnt);
-			unreadJson.put("type", "chat");
-			
-			// 결과 json { "type":"chat", "chat":"전체건수", "room":"신규 채팅 roomKey|미확인 건수"}
-			map.put(receivers[i], unreadJson);
-		}
+		});
 		
 		return map;
 		
@@ -201,18 +209,68 @@ public class ChatSericeImpl implements ChatService {
 		return map;
 	}
 
-	// 해당 라인의 미확인 건수 구함
+	// 해당 라인의 미확인 건수 저장 및 조회 
 	@Override
-	public String getUnreadCount(String roomKey, String lineKey) {
+	public String getUnreadLineCount(String roomKey, String lineKey, String receiver, String sender) {
 		
 		String result = "0";
 		
-		String line = roomKey+"|"+lineKey;
-		long unreadCount = redisTemplate.opsForSet().size(line);
+		String line = "unreadLineUsers:"+roomKey+":"+lineKey;
 		
+		String[] receivers = receiver.split("[|]");
+		
+		Long unreadCount = null;
+		
+		RedisSerializer keySerializer = redisTemplate.getKeySerializer();
+		RedisSerializer valueRedisSerializer = redisTemplate.getValueSerializer();
+		redisTemplate.execute(new RedisCallback<Object>() {
+
+			@Override
+			public Object doInRedis(RedisConnection connection) throws DataAccessException {
+				
+				if(receivers != null) {
+					for(int i = 0; i < receivers.length; i++) {
+						if(!receivers[i].equals(sender)) {
+							connection.sAdd(keySerializer.serialize(line), valueRedisSerializer.serialize(receivers[i]));
+						}
+					}
+				}
+				
+				if(connection != null) {
+					connection.close();
+				}
+				return null;
+			}
+			
+		});
+		unreadCount = redisTemplate.opsForSet().size(line);
 		result = String.valueOf(unreadCount);
 		
 		return result;
+	}
+
+	// 채팅 입장시 해당 채팅방 데이터 읽음처리
+	@Override
+	public void putChatRoomUnread(String roomKey, String username) {
+		
+		RedisSerializer keySerializer = redisTemplate.getKeySerializer();
+		redisTemplate.execute(new RedisCallback<Object>() {
+
+			@Override
+			public Object doInRedis(RedisConnection connection) throws DataAccessException {
+				
+				
+				
+				if(connection != null) {
+					connection.close();
+				}
+				return null;
+			}
+			
+		});
+		
+		
+		
 	}
 	
 	

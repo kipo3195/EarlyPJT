@@ -19,9 +19,11 @@ public interface ChatService {
 	
 	public List<ChatMain> getChatRoomLineAppend(String chatRoomKey, String lineKey);
 	
-	public Map<String, JSONObject> putChatUnreadCnt(String roomKey, String receiver, String sender, String lineKey);
+	public Map<String, JSONObject> getUnreadChatCount(String roomKey, String receiver, String sender, String lineKey);
 	
 	public Map<String, String> getAllUnreadCnt(String username);
 
-	public String getUnreadCount(String roomKey, String lineKey);
+	public String getUnreadLineCount(String roomKey, String lineKey, String receiver, String sender);
+	
+	public void putChatRoomUnread(String roomKey, String username);
 }
