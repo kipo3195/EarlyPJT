@@ -129,6 +129,8 @@ public class UserChatController {
 		/* redis 수신자 별 라인 저장 -> 수신자의 채팅방 미확인 건수 저장 -> 수신자의 전체 채팅 미확인 건수 저장 및 전체 건수 조회*/ 
 		Map<String, JSONObject> unreadMap = chatService.getUnreadChatCount(roomKey, receiver, sender, lineKey);
 		
+		System.out.println(unreadMap);
+		
 		// 발송 - 채팅방의 수신자의 채팅 미확인 전체 건수 & 해당 채팅방의 건수
 		Iterator<String> unreadIter = unreadMap.keySet().iterator();
 		while(unreadIter.hasNext()) {
@@ -190,6 +192,8 @@ public class UserChatController {
 					
 					/* 입장한 채팅방 읽음처리 */
 					chatService.putChatRoomUnread(chatRoomKey, username);
+
+					// 20240124 TODO 미확인 건수 갱신 & 전달(웹소켓)
 					
 					/* 리스트 조회 */
 					List<ChatMain> lineList = chatService.getChatRoomLine(chatRoomKey);
@@ -247,8 +251,6 @@ public class UserChatController {
 					
 					String chatRoomKey = chatRoom.getChatRoomKey();
 					String nextLine = chatRoom.getLastLineKey();
-					
-					System.out.println(username + " : " + chatRoomKey + " : " + nextLine);
 					
 					if(!StringUtils.isEmpty(chatRoomKey)) { 
 						
