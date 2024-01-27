@@ -11,9 +11,11 @@ import com.early.www.chat.model.ChatRoom;
 
 public interface ChatService {
 
+	public String getLineKey();
+	
 	public List<ChatRoom> getMyChatList(String username);
 
-	public String putChatMain(ChatMain main);
+	public void putChatMain(ChatMain main);
 
 	public List<ChatMain> getChatRoomLine(String chatRoomKey);
 	

@@ -15,10 +15,12 @@ import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.early.www.chat.VO.ChatReadVO;
 import com.early.www.chat.model.ChatMain;
 import com.early.www.chat.model.ChatRoom;
 import com.early.www.chat.service.ChatService;
@@ -33,6 +35,39 @@ public class UserChatController {
 
 	@Autowired
 	ChatService chatService;
+	
+	// 라인키 발급 로직 
+	@GetMapping("/user/getLineKey")
+	public Map<String, String> getLineKey(HttpServletRequest request, HttpServletResponse response){
+		Map<String, String> resultMap = new HashMap<String, String>();
+		
+		String error = (String) response.getHeader("error_code");
+		if(error != null) {
+			resultMap.put("flag", "fail");
+			resultMap.put("error_code", response.getHeader("error_code"));
+		}else {
+			String lineKey = chatService.getLineKey();
+			resultMap.put("lineKey", lineKey);
+		}
+		
+		return resultMap;
+	}
+	
+	// 읽음 처리 
+	@PostMapping("/user/readLines")
+	public Map<String, String> readLines(HttpServletRequest request, HttpServletResponse response, @RequestBody ChatReadVO data){
+		Map<String, String> resultMap = new HashMap<String, String>();
+		String error = (String) response.getHeader("error_code");
+		if(error != null) {
+			resultMap.put("flag", "fail");
+			resultMap.put("error_code", response.getHeader("error_code"));
+		}else {
+				// TODO
+			
+		}
+		return resultMap;
+		
+	}
 	
 	// 채팅방 리스트 조회 
 	@PostMapping("/user/chatList")
@@ -90,23 +125,28 @@ public class UserChatController {
 	@MessageMapping("/user/chat")
 	public void handle(ChatMain main) {
 		
+		System.out.println("main 호출 ! : "+main);
 		
 		/* 데이터 검증 */
-		if(main == null || StringUtils.isEmpty(main.getChatReceiver()) || StringUtils.isEmpty(main.getChatRoomKey()) || StringUtils.isEmpty(main.getChatSender())) {
+		if(main == null 
+		   || StringUtils.isEmpty(main.getChatReceiver()) || StringUtils.isEmpty(main.getChatRoomKey()) || StringUtils.isEmpty(main.getChatSender())
+		   || StringUtils.isEmpty(main.getChatLineKey())) {
 			System.out.println("[UserChatController] send data check !");
 			return;
 		}
+		
 		
 		/* 검증된 데이터 */ 
 		String roomKey = main.getChatRoomKey();
 		String receiver = main.getChatReceiver();
 		String sender = main.getChatSender();
 		String data = main.getChatContents();
+		String lineKey = main.getChatLineKey();
 		
 		
 		/* 라인키 생성 및 DB 저장 */
 		// TODO 채팅 내용 암호화 및 QueueThread 방식으로 전환 */ 
-		String lineKey = chatService.putChatMain(main); 
+		chatService.putChatMain(main); 
 		
 		
 		/* redis 해당 라인의 읽지 않은 사용자 저장 및 조회 */
@@ -114,6 +154,8 @@ public class UserChatController {
 		
 		// 전달 할 채팅 데이터 json 생성
 		JSONObject sendData = new JSONObject();
+		
+		sendData.put("chatLineKey", lineKey);
 		sendData.put("chatRoomKey", roomKey);
 		sendData.put("chatContents", data);
 		sendData.put("chatSender", sender);

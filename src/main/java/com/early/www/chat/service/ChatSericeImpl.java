@@ -35,6 +35,19 @@ public class ChatSericeImpl implements ChatService {
 	@Autowired
 	RedisTemplate<String, Object> redisTemplate;
 	
+	@Override
+	public String getLineKey() {
+		
+		long time = System.currentTimeMillis();
+		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("YYYYMMddHHmmssSSS");
+		Date date = new Date();
+		date.setTime(time);
+		
+		return simpleDateFormat.format(date);
+		
+	}
+	
+	
 	// line key 생성
 	public String makeLineKey() {
 		long time = System.currentTimeMillis();
@@ -69,14 +82,15 @@ public class ChatSericeImpl implements ChatService {
 	
 	//채팅 라인 저장
 	@Override
-	public String putChatMain(ChatMain main) {
-		String lineKey = makeLineKey();
-		main.setChatLineKey(lineKey);
-		main.setSendDate(lineKey);
+	public void putChatMain(ChatMain main) {
+		//String lineKey = makeLineKey();
+		
+		main.setChatLineKey(main.getChatLineKey());
+		main.setSendDate(main.getChatLineKey());
 		main.setChatDelFlag("N");
 		System.out.println("[ChatSericeImpl] main : " + main);
+		
 		chatMainRepository.save(main);
-		return lineKey;
 	}
 
 	// 채팅방 데이터 조회 (최초)
@@ -321,11 +335,7 @@ public class ChatSericeImpl implements ChatService {
 
 
 	}
-	
-	
-	
-	
-	
+
 	
 
 }
