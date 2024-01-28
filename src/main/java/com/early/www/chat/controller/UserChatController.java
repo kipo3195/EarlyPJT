@@ -53,17 +53,20 @@ public class UserChatController {
 		return resultMap;
 	}
 	
-	// 읽음 처리 
+	// 읽음 처리 이벤트 수신
 	@PostMapping("/user/readLines")
-	public Map<String, String> readLines(HttpServletRequest request, HttpServletResponse response, @RequestBody ChatReadVO data){
+	public Map<String, String> readLines(HttpServletRequest request, HttpServletResponse response, @RequestBody ChatReadVO chatReadVO){
 		Map<String, String> resultMap = new HashMap<String, String>();
 		String error = (String) response.getHeader("error_code");
 		if(error != null) {
 			resultMap.put("flag", "fail");
 			resultMap.put("error_code", response.getHeader("error_code"));
 		}else {
-				// TODO
 			
+			String username = (String) request.getAttribute("username");
+			Map<String, String> unreadJson = chatService.getReadSuccessLines(chatReadVO.getChatRoomKey(), username, chatReadVO.getRecvLine());
+
+			return unreadJson;
 		}
 		return resultMap;
 		
@@ -232,12 +235,12 @@ public class UserChatController {
 				
 				if(!StringUtils.isEmpty(chatRoomKey)) { 
 					
-					/* 입장한 채팅방 읽음처리 */
-					chatService.putChatRoomUnread(chatRoomKey, username);
+					/* 입장한 채팅방 읽음처리  "0" -> 모두 읽음 처리 하겠다. */
+					Map<String, String> map = chatService.putChatRoomUnread(chatRoomKey, username, "0");
 
 					// 20240124 TODO 미확인 건수 갱신 & 전달(웹소켓)
 					
-					/* 리스트 조회 */
+					/* 라인 리스트 조회 */
 					List<ChatMain> lineList = chatService.getChatRoomLine(chatRoomKey);
 					if(lineList != null && !lineList.isEmpty()) {
 						ObjectMapper mapper = new ObjectMapper();

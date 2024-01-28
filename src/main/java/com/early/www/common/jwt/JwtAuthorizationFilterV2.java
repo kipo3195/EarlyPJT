@@ -62,7 +62,7 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
 			throws IOException, ServletException {
 		
-		System.out.println("[JwtAuthorizationFilterV2] 인증이나 권한이 필요한 주소 요청 !");
+		//System.out.println("[JwtAuthorizationFilterV2] 인증이나 권한이 필요한 주소 요청 !");
 		
 		String requestUrl = request.getRequestURI();
 		System.out.println("[JwtAuthorizationFilterV2] requestUrl : "+ requestUrl);

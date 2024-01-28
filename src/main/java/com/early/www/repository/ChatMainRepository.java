@@ -16,5 +16,7 @@ public interface ChatMainRepository extends JpaRepository<ChatMain, Long>{
 	@Query(nativeQuery = true, value = "select * from ("
 			+ "select * from tbl_chat_main where chat_room_key = :chatRoomKey and chat_type !='O' and chat_line_key < :lineKey order by chat_seq desc limit 0, 20) as aa order by chat_seq asc")
 	List<ChatMain> findByChatRoomKeyAndLineKey(String chatRoomKey, String lineKey);
+	
+	
 
 }
