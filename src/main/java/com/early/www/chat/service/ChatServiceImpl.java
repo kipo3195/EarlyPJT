@@ -367,9 +367,9 @@ public class ChatServiceImpl implements ChatService {
 
 	// 읽음 요청 
 	@Override
-	public Map<String, String> getReadSuccessLines(String roomKey, String username, String startLineKey) {
+	public Map<String, Object> getReadSuccessLines(String roomKey, String username, String startLineKey) {
 		// 전달받은 라인 이후의 신규 수신 라인 읽음처리 
-		Map<String, String> map = new HashMap<String, String>();
+		Map<String, Object> map = new HashMap<String, Object>();
 		
 		JSONObject json = new JSONObject();
 		
@@ -426,7 +426,7 @@ public class ChatServiceImpl implements ChatService {
 				map.put("type", "chat");	
 				map.put("chat", String.valueOf(allCount));	// 채팅 전체 건수
 				map.put("room", String.valueOf(lineCount)); // 해당 채팅방의 건수 
-				map.put("result", json.toJSONString());
+				map.put("result", json);
 				if(connection != null) {
 					connection.close();
 				}
@@ -436,6 +436,7 @@ public class ChatServiceImpl implements ChatService {
 		
 		return map;
 	}
+
 
 
 }

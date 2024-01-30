@@ -65,7 +65,7 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 		//System.out.println("[JwtAuthorizationFilterV2] 인증이나 권한이 필요한 주소 요청 !");
 		
 		String requestUrl = request.getRequestURI();
-		System.out.println("[JwtAuthorizationFilterV2] requestUrl : "+ requestUrl);
+		//System.out.println("[JwtAuthorizationFilterV2] requestUrl : "+ requestUrl);
 		
 		String jwtHeader = null; 
 		String username = null;
@@ -151,7 +151,7 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 
 												String newAccessToken = createAccessToken(savedToken);
 												response.addHeader("Authorization", "Bearer "+newAccessToken); //Bearer 한칸 띄고 jwtToken
-												System.out.println("[JwtAuthorizationFilterV2] token 재발급 성공 , newAccessToken : "+ newAccessToken);
+												// System.out.println("[JwtAuthorizationFilterV2] token 재발급 성공 , newAccessToken : "+ newAccessToken);
 												// chain.doFilter(request, response);
 											}
 										}	

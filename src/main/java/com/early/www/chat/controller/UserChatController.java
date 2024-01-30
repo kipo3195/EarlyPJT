@@ -54,6 +54,16 @@ public class UserChatController {
 	}
 	
 	// 읽음 처리 이벤트 수신
+	// 읽음 처리 설계 20240130 기준
+    // 서버의 user/readLines API를 호출
+    // recvLine의 이후 라인키를 모두 조회 
+    // 요청 사용자(myUnreadLine)의 모든 미확인 건수 삭제 + 해당 라인의 미확인 사용자(unreadLineUsers) 삭제
+    // 라인 별 미확인 사용자 (unreadLineUsers)의 count 계산 sCard
+    // 라인을 key로 건수를 value 저장
+    // 모든 라인키 처리 후 요청 사용자의 해당 채팅방 미확인 건수 0으로 만듦
+    // 나의 전체 채팅방의 미확인 건수를 다 더함
+    // /user/readLines의 response를 통해 채팅 전체 건수, 해당 채팅방의 건수를 전달 (resultMap)
+    // 웹소켓을 통해 해당 채팅방을 구독하는 모든 사용자에게 읽음 처리된 라인을 라인:건수의 형식으로 publish 하여 처리.(socketJson)
 	@PostMapping("/user/readLines")
 	public Map<String, String> readLines(HttpServletRequest request, HttpServletResponse response, @RequestBody ChatReadVO chatReadVO){
 		Map<String, String> resultMap = new HashMap<String, String>();
@@ -64,12 +74,42 @@ public class UserChatController {
 		}else {
 			
 			String username = (String) request.getAttribute("username");
-			Map<String, String> unreadJson = chatService.getReadSuccessLines(chatReadVO.getChatRoomKey(), username, chatReadVO.getRecvLine());
+			
+			Map<String, Object> unreadJson = chatService.getReadSuccessLines(chatReadVO.getChatRoomKey(), username, chatReadVO.getRecvLine());
+			// return 하면 이벤트 수신 요청자 (수신자) 처리
+			
+			if(unreadJson != null && !unreadJson.isEmpty()) {
+				
+				String type = (String) unreadJson.get("type");
+				String chat = (String) unreadJson.get("chat");
+				String room = (String) unreadJson.get("room");
+				JSONObject result = (JSONObject) unreadJson.get("result");
 
-			return unreadJson;
+				// 유효성 검사 체크 로직 추가 할 것 TODO
+				
+				/* linekey:count는 웹 소켓으로 전달 */
+				// 보낼 경로 설정
+				String dest = "/topic/room/"+chatReadVO.getChatRoomKey();
+				// 발송
+				if(result != null && !result.isEmpty()) {
+					JSONObject socketJson = new JSONObject();
+					socketJson.put("result", result);
+					socketJson.put("type", "readLines");
+					simpMessagingTemplate.convertAndSend(dest, socketJson.toJSONString());
+				}
+				
+				/* 전체건수, 채팅방 건수는 response로 전달 */
+				resultMap.put("type", type);
+				resultMap.put("chat", chat);
+				resultMap.put("room", room);
+				
+				return resultMap;
+			}else {
+				resultMap.put("flag", "fail");
+				resultMap.put("error_code", response.getHeader("error_code"));
+			}
 		}
 		return resultMap;
-		
 	}
 	
 	// 채팅방 리스트 조회 
@@ -84,7 +124,6 @@ public class UserChatController {
 		}else {
 			
 			String username = (String) request.getAttribute("username");
-			
 			if(username != null && !username.isEmpty()) {
 				
 				// 읽지않은 건수 함께 조회
@@ -127,8 +166,7 @@ public class UserChatController {
 	// 채팅 발송 - error 체크 하지 않는 이유? 웹소켓 연결 자체가 http 프로토콜이 아니기 때문에, 그리고 로그인이 검증되야 웹소켓을 연결 할 수 있으므로
 	@MessageMapping("/user/chat")
 	public void handle(ChatMain main) {
-		
-		System.out.println("main 호출 ! : "+main);
+	
 		
 		/* 데이터 검증 */
 		if(main == null 
@@ -157,7 +195,7 @@ public class UserChatController {
 		
 		// 전달 할 채팅 데이터 json 생성
 		JSONObject sendData = new JSONObject();
-		
+		sendData.put("type", "chat");
 		sendData.put("chatLineKey", lineKey);
 		sendData.put("chatRoomKey", roomKey);
 		sendData.put("chatContents", data);
@@ -174,7 +212,7 @@ public class UserChatController {
 		/* redis 수신자 별 라인 저장 -> 수신자의 채팅방 미확인 건수 저장 -> 수신자의 전체 채팅 미확인 건수 저장 및 전체 건수 조회*/ 
 		Map<String, JSONObject> unreadMap = chatService.getUnreadChatCount(roomKey, receiver, sender, lineKey);
 		
-		System.out.println(unreadMap);
+		//System.out.println(unreadMap);
 		
 		// 발송 - 채팅방의 수신자의 채팅 미확인 전체 건수 & 해당 채팅방의 건수
 		Iterator<String> unreadIter = unreadMap.keySet().iterator();

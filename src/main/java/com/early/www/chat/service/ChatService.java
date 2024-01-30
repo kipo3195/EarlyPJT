@@ -29,7 +29,7 @@ public interface ChatService {
 	
 	public Map<String, String> putChatRoomUnread(String roomKey, String username, String startLineKey);
 	
-	public Map<String, String> getReadSuccessLines(String roomKey, String username, String startLineKey);
-	
+	public Map<String, Object> getReadSuccessLines(String roomKey, String username, String startLineKey);
+
 	
 }
