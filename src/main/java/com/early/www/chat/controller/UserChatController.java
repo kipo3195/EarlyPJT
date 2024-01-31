@@ -274,9 +274,29 @@ public class UserChatController {
 				if(!StringUtils.isEmpty(chatRoomKey)) { 
 					
 					/* 입장한 채팅방 읽음처리  "0" -> 모두 읽음 처리 하겠다. */
-					Map<String, String> map = chatService.putChatRoomUnread(chatRoomKey, username, "0");
+					Map<String, Object> unreadJson = chatService.getReadSuccessLines(chatRoomKey, username, "0");
+					// 미확인 건수 갱신 & 전달(웹소켓)
+					if(unreadJson != null && !unreadJson.isEmpty()) {
+						
+						String type = (String) unreadJson.get("type");
+						String chat = (String) unreadJson.get("chat");
+						String room = (String) unreadJson.get("room");
+						JSONObject result = (JSONObject) unreadJson.get("result");
 
-					// 20240124 TODO 미확인 건수 갱신 & 전달(웹소켓)
+						// 유효성 검사 체크 로직 추가 할 것 TODO
+						
+						/* linekey:count는 웹 소켓으로 전달 */
+						// 보낼 경로 설정
+						String dest = "/topic/room/"+chatRoomKey;
+						// 발송
+						if(result != null && !result.isEmpty()) {
+							JSONObject socketJson = new JSONObject();
+							socketJson.put("result", result);
+							socketJson.put("type", "readLines");
+							simpMessagingTemplate.convertAndSend(dest, socketJson.toJSONString());
+						}
+						
+					}else {}
 					
 					/* 라인 리스트 조회 */
 					List<ChatMain> lineList = chatService.getChatRoomLine(chatRoomKey);
@@ -309,9 +329,7 @@ public class UserChatController {
 				// 토큰은 검증했지만 username이 없는경우?
 				
 			}
-			
 		}
-		
 		
 		return resultMap;
 	}

@@ -65,7 +65,7 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 		//System.out.println("[JwtAuthorizationFilterV2] 인증이나 권한이 필요한 주소 요청 !");
 		
 		String requestUrl = request.getRequestURI();
-		//System.out.println("[JwtAuthorizationFilterV2] requestUrl : "+ requestUrl);
+		System.out.println("[JwtAuthorizationFilterV2] requestUrl : "+ requestUrl);
 		
 		String jwtHeader = null; 
 		String username = null;

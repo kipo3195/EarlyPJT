@@ -293,77 +293,77 @@ public class ChatServiceImpl implements ChatService {
 		return result;
 	}
 
-	// 채팅 입장시 해당 채팅방 데이터 읽음처리
-	@Override
-	public Map<String, String> putChatRoomUnread(String roomKey, String username, String startLineKey) {
-		
-		// 클라이언트로 전달할 데이터 
-		 Map<String, String> map = new HashMap<String, String>();
-		
-		if(!startLineKey.equals("0")) {
-			startLine = Double.valueOf(startLineKey);
-		}
-		
-		RedisSerializer keySerializer = redisTemplate.getKeySerializer();
-		RedisSerializer valueSerializer = redisTemplate.getValueSerializer();
-		RedisSerializer hashKeySerializer = redisTemplate.getHashKeySerializer();
-		RedisSerializer hashValueSerializer = redisTemplate.getHashValueSerializer();
-		redisTemplate.execute(new RedisCallback<Object>() {
-
-			@Override
-			public Object doInRedis(RedisConnection connection) throws DataAccessException {
-
-				// 해당 방의 전체 미확인 건수 조회
-				String key = "myUnreadLine:"+roomKey+":"+username;
-				Set<byte[]> myUnreadLineSet = connection.zRangeByScore(keySerializer.serialize(key), startLine, 99999999999999999L);
-
-				Object[] arr = myUnreadLineSet.toArray();
-				for(int i = 0; i < arr.length; i++) {
-					
-					// 나의 미확인 건수 삭제 
-					String unreadLine = (String) valueSerializer.deserialize((byte[]) arr[i]);
-					key = "myUnreadLine:"+roomKey+":"+username;
-					connection.zRem(keySerializer.serialize(key), valueSerializer.serialize(unreadLine));
-					// System.out.println("나의 미확인 건수 삭제 key: " + key+", unreadLine : "+unreadLine);
-					
-					// 해당 라인의 미확인 사용자 중 나 삭제
-					key = "unreadLineUsers:"+roomKey+":"+unreadLine;
-					connection.sRem(keySerializer.serialize(key), keySerializer.serialize(username));
-					
-				}
-				
-				// 나의 해당 채팅방 미확인 건수 제거 
-				String unreadRoom = "myUnreadRoom:"+username;
-				connection.hDel(hashKeySerializer.serialize(unreadRoom), hashKeySerializer.serialize(roomKey));
-				
-				// 나의 전체 채팅방 건수 조회
-				Map<byte[], byte[]> roomMap = connection.hGetAll(hashKeySerializer.serialize(unreadRoom));
-				Iterator<byte[]> allRoom = roomMap.keySet().iterator();
-				long allCount = 0;
-				
-				while(allRoom.hasNext()) {
-					byte[] room = allRoom.next();
-					String value = (String) hashValueSerializer.deserialize(roomMap.get(room));
-					allCount =+ Long.valueOf(value);
-				}
-				
-				String unreadLine = "myUnreadLine:"+roomKey+":"+username;
-				Long lineCount = connection.zCard(keySerializer.serialize(unreadLine));
-				
-				map.put("type", "chat");	
-				map.put("chat", String.valueOf(allCount));	// 채팅 전체 건수
-				map.put("room", String.valueOf(lineCount)); // 해당 채팅방의 건수 
-				
-				if(connection != null) {
-					connection.close();
-				}
-				return null;
-			}
-		});
-		
-		return map;
-		
-	}
+	// 채팅 입장시 해당 채팅방 데이터 읽음처리 -> 20240131 getReadSuccessLines 로 대체함 
+//	@Override
+//	public Map<String, String> putChatRoomUnread(String roomKey, String username, String startLineKey) {
+//		
+//		// 클라이언트로 전달할 데이터 
+//		 Map<String, String> map = new HashMap<String, String>();
+//		
+//		if(!startLineKey.equals("0")) {
+//			startLine = Double.valueOf(startLineKey);
+//		}
+//		
+//		RedisSerializer keySerializer = redisTemplate.getKeySerializer();
+//		RedisSerializer valueSerializer = redisTemplate.getValueSerializer();
+//		RedisSerializer hashKeySerializer = redisTemplate.getHashKeySerializer();
+//		RedisSerializer hashValueSerializer = redisTemplate.getHashValueSerializer();
+//		redisTemplate.execute(new RedisCallback<Object>() {
+//
+//			@Override
+//			public Object doInRedis(RedisConnection connection) throws DataAccessException {
+//
+//				// 해당 방의 전체 미확인 건수 조회
+//				String key = "myUnreadLine:"+roomKey+":"+username;
+//				Set<byte[]> myUnreadLineSet = connection.zRangeByScore(keySerializer.serialize(key), startLine, 99999999999999999L);
+//
+//				Object[] arr = myUnreadLineSet.toArray();
+//				for(int i = 0; i < arr.length; i++) {
+//					
+//					// 나의 미확인 건수 삭제 
+//					String unreadLine = (String) valueSerializer.deserialize((byte[]) arr[i]);
+//					key = "myUnreadLine:"+roomKey+":"+username;
+//					connection.zRem(keySerializer.serialize(key), valueSerializer.serialize(unreadLine));
+//					// System.out.println("나의 미확인 건수 삭제 key: " + key+", unreadLine : "+unreadLine);
+//					
+//					// 해당 라인의 미확인 사용자 중 나 삭제
+//					key = "unreadLineUsers:"+roomKey+":"+unreadLine;
+//					connection.sRem(keySerializer.serialize(key), keySerializer.serialize(username));
+//					
+//				}
+//				
+//				// 나의 해당 채팅방 미확인 건수 제거 
+//				String unreadRoom = "myUnreadRoom:"+username;
+//				connection.hDel(hashKeySerializer.serialize(unreadRoom), hashKeySerializer.serialize(roomKey));
+//				
+//				// 나의 전체 채팅방 건수 조회
+//				Map<byte[], byte[]> roomMap = connection.hGetAll(hashKeySerializer.serialize(unreadRoom));
+//				Iterator<byte[]> allRoom = roomMap.keySet().iterator();
+//				long allCount = 0;
+//				
+//				while(allRoom.hasNext()) {
+//					byte[] room = allRoom.next();
+//					String value = (String) hashValueSerializer.deserialize(roomMap.get(room));
+//					allCount =+ Long.valueOf(value);
+//				}
+//				
+//				String unreadLine = "myUnreadLine:"+roomKey+":"+username;
+//				Long lineCount = connection.zCard(keySerializer.serialize(unreadLine));
+//				
+//				map.put("type", "chat");	
+//				map.put("chat", String.valueOf(allCount));	// 채팅 전체 건수
+//				map.put("room", String.valueOf(lineCount)); // 해당 채팅방의 건수 
+//				
+//				if(connection != null) {
+//					connection.close();
+//				}
+//				return null;
+//			}
+//		});
+//		
+//		return map;
+//		
+//	}
 
 	// 읽음 요청 
 	@Override
@@ -400,6 +400,7 @@ public class ChatServiceImpl implements ChatService {
 					key = "unreadLineUsers:"+roomKey+":"+unreadLine;
 					connection.sRem(keySerializer.serialize(key), keySerializer.serialize(username));
 					
+					// 내가 읽음 처리 함으로 써 해당 라인의 남은 미확인 사용자 건수 전달
 					long count = connection.sCard(keySerializer.serialize(key));
 					
 					json.put(unreadLine, String.valueOf(count));

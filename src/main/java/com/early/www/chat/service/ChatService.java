@@ -27,7 +27,7 @@ public interface ChatService {
 
 	public String getUnreadLineCount(String roomKey, String lineKey, String receiver, String sender);
 	
-	public Map<String, String> putChatRoomUnread(String roomKey, String username, String startLineKey);
+	//public Map<String, String> putChatRoomUnread(String roomKey, String username, String startLineKey);
 	
 	public Map<String, Object> getReadSuccessLines(String roomKey, String username, String startLineKey);
 
