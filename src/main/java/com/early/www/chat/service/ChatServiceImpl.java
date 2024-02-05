@@ -1,6 +1,5 @@
 package com.early.www.chat.service;
 
-import java.sql.Array;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -18,7 +17,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Service;
 
-import com.early.www.chat.VO.ChatReadVO;
+import com.early.www.chat.VO.ChatLineEventVO;
 import com.early.www.chat.model.ChatMain;
 import com.early.www.chat.model.ChatRoom;
 import com.early.www.repository.ChatMainRepository;
@@ -38,6 +37,9 @@ public class ChatServiceImpl implements ChatService {
 	
 	// 람다는 파라미터로 사용하는 변수와 로컬 변수를 구분을 하지 못하기 때문에 클래스 변수로 잡아줌
 	double startLine = 0;
+	
+	// 위 이유와 동일함.
+	boolean result = false;
 	
 	@Override
 	public String getLineKey() {
@@ -436,6 +438,64 @@ public class ChatServiceImpl implements ChatService {
 		});
 		
 		return map;
+	}
+
+
+	@Override
+	public Map<String, String> putLikeEvent(String username, ChatLineEventVO chatLineEventVO) {
+		
+		RedisSerializer keySerializer = redisTemplate.getKeySerializer();
+		RedisSerializer valueSerializer = redisTemplate.getValueSerializer();
+		RedisSerializer hashKeySerializer = redisTemplate.getHashKeySerializer();
+		RedisSerializer hashValueSerializer = redisTemplate.getHashValueSerializer();
+		
+		String type = chatLineEventVO.getType();
+		String roomKey = chatLineEventVO.getRoomKey();
+		String lineKey = chatLineEventVO.getLineKey();
+//		System.out.println("type : " + type);
+//		System.out.println("roomKey : " + roomKey);
+//		System.out.println("lineKey : " + lineKey);
+		
+		Map<String, String> resultMap = new HashMap<String, String>();
+		redisTemplate.execute(new RedisCallback<Object>() {
+			
+			@Override
+			public Object doInRedis(RedisConnection connection) throws DataAccessException {
+				
+				String key = type+":"+roomKey+":"+lineKey;
+				long saddresult = connection.sAdd(keySerializer.serialize(key), valueSerializer.serialize(username));
+				
+				if(saddresult == 0) {
+					// 취소가 되어야함.
+					long cancelCnt = connection.sRem(keySerializer.serialize(key), valueSerializer.serialize(username));
+					//System.out.println("취소 ! " + cancelCnt);
+				}
+				// 해당 방의 라인의 타입의 건수
+				long cnt = connection.sCard(keySerializer.serialize(key));
+				
+				//System.out.println(key+" 의 총 건수 : "+cnt);
+				key = "allChatEvent:"+roomKey+":"+lineKey;
+				result = connection.hSet(hashKeySerializer.serialize(key), hashKeySerializer.serialize(type),hashValueSerializer.serialize(String.valueOf(cnt)));
+
+				Map<byte[], byte[]> allChatEvent = connection.hGetAll(hashKeySerializer.serialize(key));
+				
+				Iterator<byte[]> chatEvent = allChatEvent.keySet().iterator();
+
+				while(chatEvent.hasNext()) {
+					byte[] event = chatEvent.next();
+					String eventKey = (String) hashKeySerializer.deserialize(event);
+					String value = (String) hashValueSerializer.deserialize(allChatEvent.get(event));
+					
+					resultMap.put(eventKey, value);
+				}
+				if(connection != null) {
+					connection.close();
+				}
+				return null;
+			}
+		});
+		
+		return resultMap;
 	}
 
 

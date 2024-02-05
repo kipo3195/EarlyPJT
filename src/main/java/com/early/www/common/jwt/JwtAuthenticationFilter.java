@@ -127,15 +127,10 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 					.build();
 			response.setHeader("Set-Cookie", cookie.toString());
 			// refresh token create end 
-
 			
 			// refresh token DB insert 
 			refreshTokenDBinsert(nowDate, refreshToken, principalDetails.getUsername());
 
-			// 해당 토큰을 header - Authorization에 담아서 return ..
-			// 다음번 요청시 해당 TOKEN으로 접근시 유효한지 체크하면 됨.(Filter)
-			// 원래 쿠키 + 세션으로 체크하는 것을 JWT TOKEN으로 처리하는 것임.
-			
 			// SecurityContextHolder 영역에 저장.
 			SecurityContextHolder.getContext().setAuthentication(authResult);
 			

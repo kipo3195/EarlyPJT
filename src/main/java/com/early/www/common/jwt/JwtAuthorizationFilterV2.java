@@ -22,6 +22,7 @@ import com.early.www.repository.CommonRepository;
 import com.early.www.repository.TokenRepository;
 import com.early.www.user.model.EarlyUser;
 import com.early.www.user.model.RefreshToken;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 // 20240120
 // 기존에 있는 JwtAuthorizationFilter는 토큰 인증 방법이 아래와 같다.
@@ -76,7 +77,7 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 			// accessToken
 			jwtHeader = request.getHeader("Authorization");
 		
-			System.out.println("access token : " + jwtHeader);
+			System.out.println("넘겨받은 access token : " + jwtHeader);
 			// 유효성 검사
 			if(jwtHeader == null || !jwtHeader.startsWith("Bearer")) {
 				response.addHeader("error_code", "403");
@@ -173,6 +174,7 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 							chain.doFilter(request, response);
 						}
 					}
+					
 					request.setAttribute("username", principalDetails.getUsername());
 				}
 			}else {

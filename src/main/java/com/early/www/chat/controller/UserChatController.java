@@ -20,10 +20,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.early.www.chat.VO.ChatLineEventVO;
 import com.early.www.chat.VO.ChatReadVO;
 import com.early.www.chat.model.ChatMain;
 import com.early.www.chat.model.ChatRoom;
 import com.early.www.chat.service.ChatService;
+import com.early.www.user.model.EarlyUser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -52,6 +54,37 @@ public class UserChatController {
 		
 		return resultMap;
 	}
+	
+	// 좋아요 이벤트 처리 
+	// 프로젝트의 문서 참조
+	@PostMapping("/user/putChatLineEvent")
+	public Map<String, String> putChatLineEvent(HttpServletRequest request, HttpServletResponse response,  @RequestBody ChatLineEventVO chatLineEventVO){
+		Map<String, String> resultMap = new HashMap<String, String>();
+		
+		String error = (String) response.getHeader("error_code");
+		boolean result = false;
+		if(error != null) {
+			resultMap.put("flag", "fail");
+			resultMap.put("error_code", response.getHeader("error_code"));
+		}else {
+			
+			String username = (String) request.getAttribute("username");
+			
+			if(username != null && chatLineEventVO != null) {
+				Map<String, String> map = chatService.putLikeEvent(username, chatLineEventVO);
+				if(!map.isEmpty()) {
+					
+					resultMap.putAll(map);
+				}
+			}
+			
+ 			resultMap.put("result", String.valueOf(result));
+		}
+		
+		return resultMap;
+		
+	}
+	
 	
 	// 읽음 처리 이벤트 수신
 	// 읽음 처리 설계 20240130 기준
@@ -114,7 +147,7 @@ public class UserChatController {
 	
 	// 채팅방 리스트 조회 
 	@PostMapping("/user/chatList")
-	public Map<String, String> chatList(HttpServletRequest request, HttpServletResponse response){
+	public Map<String, String> chatList(HttpServletRequest request, HttpServletResponse response, @RequestBody EarlyUser earlyUser){
 		Map<String, String> resultMap = new HashMap<String, String>();
 		
 		String error = (String) response.getHeader("error_code");
@@ -124,8 +157,9 @@ public class UserChatController {
 		}else {
 			
 			String username = (String) request.getAttribute("username");
-			if(username != null && !username.isEmpty()) {
-				
+			
+			// 토큰의 id와 클라이언트가 던진 id가 동일 한 경우에만 조회 20240204 -> 브라우저 2개 띄울경우 다른 토큰이 넘어오는 케이스 방지 
+			if(username != null && !username.isEmpty() && earlyUser != null && username.equals(earlyUser.getUsername())) {
 				// 읽지않은 건수 함께 조회
 				List<ChatRoom> chatList = chatService.getMyChatList(username);
 				if(chatList != null && !chatList.isEmpty()) {
@@ -153,6 +187,7 @@ public class UserChatController {
 					resultMap.put("chat_list", "C404");
 				}
 			}else {
+				System.out.println("chatlist 조회시 토큰 id와 넘긴 id가 일치 하지 않음");
 				resultMap.put("chat_list", "C403");
 			}
 		}
@@ -176,7 +211,6 @@ public class UserChatController {
 			return;
 		}
 		
-		
 		/* 검증된 데이터 */ 
 		String roomKey = main.getChatRoomKey();
 		String receiver = main.getChatReceiver();
@@ -188,7 +222,6 @@ public class UserChatController {
 		/* 라인키 생성 및 DB 저장 */
 		// TODO 채팅 내용 암호화 및 QueueThread 방식으로 전환 */ 
 		chatService.putChatMain(main); 
-		
 		
 		/* redis 해당 라인의 읽지 않은 사용자 저장 및 조회 */
 		String unreadCount = chatService.getUnreadLineCount(roomKey, lineKey, receiver, sender);
@@ -395,6 +428,8 @@ public class UserChatController {
 			
 			return resultMap;
 		}
-	
+
+		
+		
 	
 }

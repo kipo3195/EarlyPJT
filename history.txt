@@ -200,3 +200,23 @@
 	
 2024.01.31
 	1. 채팅방 입장시 읽음처리 후 채팅방 모든 사용자에게 해당 라인의 건수 동기화 처리 추가	
+	
+2024.02.05
+	1. 채팅방 라인 이벤트 (like, check, good) API 추가 /user/putChatLineEvent
+		- DB방식이 아닌 redis 방식으로 처리 
+		- 사용자 별 건수 추가 SET 사용
+			추가 sadd "type:roomKey:lineKey" : 사용자ID 
+		- sadd시 return값이 0이면 취소 
+			삭제 srem "type:roomKey:lineKey" : 사용자ID 
+		- 추가 후 건수 생성
+			scard "type:roomKey:lineKey" 
+			 -> 사용자 ID의 수 반환
+		- 전체 건수 추가 hash 사용			
+			hset "allChatEvent:roomKey:lineKey" type scard한 건수		
+		- 전체 건수 조회 hgetall 
+
+		- 신규 API 개발 예정
+			조회 채팅 라인 조회시 hget(라인별 type 건수)
+		- 신규 API 개발 예정
+			 type별 사용자는 smembers type:roomKey:lineKey -> 모달창 구현 
+		 	

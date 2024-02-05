@@ -5,7 +5,7 @@ import java.util.Map;
 
 import org.json.simple.JSONObject;
 
-import com.early.www.chat.VO.ChatReadVO;
+import com.early.www.chat.VO.ChatLineEventVO;
 import com.early.www.chat.model.ChatMain;
 import com.early.www.chat.model.ChatRoom;
 
@@ -31,5 +31,7 @@ public interface ChatService {
 	
 	public Map<String, Object> getReadSuccessLines(String roomKey, String username, String startLineKey);
 
+	public Map<String, String> putLikeEvent(String username, ChatLineEventVO chatLineEventVO);
+	
 	
 }
