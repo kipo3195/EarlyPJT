@@ -64,4 +64,19 @@ public class ChatMain{
 	@Column(name="chat_unread_count", length=5)
 	private String chatUnreadCount;
 	
+	@Column(name="chat_like_cnt", length=5)
+	@ColumnDefault("'0'")
+	private String chatLikeCnt;
+
+	@Column(name="chat_check_cnt", length=5)
+	@ColumnDefault("'0'")
+	private String chatCheckCnt;
+
+	@Column(name="chat_good_cnt", length=5)
+	@ColumnDefault("'0'")
+	private String chatGoodCnt;
+	
+	
+	
+	
 }

@@ -22,6 +22,7 @@ import com.early.www.chat.model.ChatMain;
 import com.early.www.chat.model.ChatRoom;
 import com.early.www.repository.ChatMainRepository;
 import com.early.www.repository.ChatRoomRepository;
+import com.early.www.util.CommonConst;
 
 @Service
 public class ChatServiceImpl implements ChatService {
@@ -107,6 +108,8 @@ public class ChatServiceImpl implements ChatService {
 		// 라인 조회 DB
 		List<ChatMain> chatMainList = chatMainRepository.findByChatRoomKey(chatRoomKey);
 		
+		RedisSerializer hashKeySerializer = redisTemplate.getHashKeySerializer();
+		RedisSerializer hashValueSerializer = redisTemplate.getHashValueSerializer();
 		RedisSerializer keySerializer = redisTemplate.getKeySerializer();
 		redisTemplate.execute(new RedisCallback<Object>() {
 
@@ -118,6 +121,26 @@ public class ChatServiceImpl implements ChatService {
 					String key = "unreadLineUsers:"+chatRoomKey+":"+chatMainList.get(i).getChatLineKey();
 					Long unreadCount = connection.sCard(keySerializer.serialize(key));
 					chatMainList.get(i).setChatUnreadCount(String.valueOf(unreadCount));
+					
+					key = "allChatEvent:"+chatRoomKey+":"+chatMainList.get(i).getChatLineKey();
+					Map<byte[], byte[]> allChatEvent = connection.hGetAll(hashKeySerializer.serialize(key));
+					
+					Iterator<byte[]> chatEvent = allChatEvent.keySet().iterator();
+
+					// 클라이언트에서 없으면 null임 
+					while(chatEvent.hasNext()) {
+						// 채팅 라인에 대한 이벤트 추가 
+						byte[] event = chatEvent.next();
+						String eventKey = (String) hashKeySerializer.deserialize(event);
+						String value = (String) hashValueSerializer.deserialize(allChatEvent.get(event));
+						if(eventKey.equals(CommonConst.ChatLineEventCheck)) {
+							chatMainList.get(i).setChatCheckCnt(value);
+						}else if(eventKey.equals(CommonConst.ChatLineEventGood)) {
+							chatMainList.get(i).setChatGoodCnt(value);
+						}else if(eventKey.equals(CommonConst.ChatLineEventLike)) {
+							chatMainList.get(i).setChatLikeCnt(value);
+						}
+					}
 				}
 				
 				if(connection != null) {
@@ -138,6 +161,8 @@ public class ChatServiceImpl implements ChatService {
 		List<ChatMain> chatMainList = chatMainRepository.findByChatRoomKeyAndLineKey(chatRoomKey, lineKey);
 	
 		RedisSerializer keySerializer = redisTemplate.getKeySerializer();
+		RedisSerializer hashKeySerializer = redisTemplate.getHashKeySerializer();
+		RedisSerializer hashValueSerializer = redisTemplate.getHashValueSerializer();
 		redisTemplate.execute(new RedisCallback<Object>() {
 
 			@Override
@@ -148,6 +173,27 @@ public class ChatServiceImpl implements ChatService {
 					String key = "unreadLineUsers:"+chatRoomKey+":"+chatMainList.get(i).getChatLineKey();
 					Long unreadCount = connection.sCard(keySerializer.serialize(key));
 					chatMainList.get(i).setChatUnreadCount(String.valueOf(unreadCount));
+					
+					key = "allChatEvent:"+chatRoomKey+":"+chatMainList.get(i).getChatLineKey();
+					Map<byte[], byte[]> allChatEvent = connection.hGetAll(hashKeySerializer.serialize(key));
+					
+					Iterator<byte[]> chatEvent = allChatEvent.keySet().iterator();
+
+					// 클라이언트에서 없으면 null임 
+					while(chatEvent.hasNext()) {
+						// 채팅 라인에 대한 이벤트 추가 
+						byte[] event = chatEvent.next();
+						String eventKey = (String) hashKeySerializer.deserialize(event);
+						String value = (String) hashValueSerializer.deserialize(allChatEvent.get(event));
+						if(eventKey.equals(CommonConst.ChatLineEventCheck)) {
+							chatMainList.get(i).setChatCheckCnt(value);
+						}else if(eventKey.equals(CommonConst.ChatLineEventGood)) {
+							chatMainList.get(i).setChatGoodCnt(value);
+						}else if(eventKey.equals(CommonConst.ChatLineEventLike)) {
+							chatMainList.get(i).setChatLikeCnt(value);
+						}
+					}
+					
 				}
 				
 				if(connection != null) {
@@ -442,7 +488,7 @@ public class ChatServiceImpl implements ChatService {
 
 
 	@Override
-	public Map<String, String> putLikeEvent(String username, ChatLineEventVO chatLineEventVO) {
+	public JSONObject putLikeEvent(String username, ChatLineEventVO chatLineEventVO) {
 		
 		RedisSerializer keySerializer = redisTemplate.getKeySerializer();
 		RedisSerializer valueSerializer = redisTemplate.getValueSerializer();
@@ -456,7 +502,7 @@ public class ChatServiceImpl implements ChatService {
 //		System.out.println("roomKey : " + roomKey);
 //		System.out.println("lineKey : " + lineKey);
 		
-		Map<String, String> resultMap = new HashMap<String, String>();
+		JSONObject json = new JSONObject();
 		redisTemplate.execute(new RedisCallback<Object>() {
 			
 			@Override
@@ -477,25 +523,17 @@ public class ChatServiceImpl implements ChatService {
 				key = "allChatEvent:"+roomKey+":"+lineKey;
 				result = connection.hSet(hashKeySerializer.serialize(key), hashKeySerializer.serialize(type),hashValueSerializer.serialize(String.valueOf(cnt)));
 
-				Map<byte[], byte[]> allChatEvent = connection.hGetAll(hashKeySerializer.serialize(key));
+				// 바뀐것만 내려줌
+				byte[] result = connection.hGet(hashKeySerializer.serialize(key), hashKeySerializer.serialize(type));
+				String value = (String) hashValueSerializer.deserialize(result);
 				
-				Iterator<byte[]> chatEvent = allChatEvent.keySet().iterator();
-
-				while(chatEvent.hasNext()) {
-					byte[] event = chatEvent.next();
-					String eventKey = (String) hashKeySerializer.deserialize(event);
-					String value = (String) hashValueSerializer.deserialize(allChatEvent.get(event));
-					
-					resultMap.put(eventKey, value);
-				}
-				if(connection != null) {
-					connection.close();
-				}
+				json.put(type, value);
+				
 				return null;
 			}
 		});
 		
-		return resultMap;
+		return json;
 	}
 
 

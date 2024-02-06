@@ -220,3 +220,9 @@
 		- 신규 API 개발 예정
 			 type별 사용자는 smembers type:roomKey:lineKey -> 모달창 구현 
 		 	
+2024.02.06
+	1. 채팅방 라인 이벤트 기존 라인 조회 API 수정 /user/chatRoomLineAppend, /user/chatRoomLine
+		- 이벤트 타입 redis 조회 로직 추가
+	2. 채팅방 라인 이벤트 (like, check, good) API 추가 /user/putChatLineEvent
+		- 변경된 타입만 해당 방을 구독하고 있는 채널에 pub 하는 로직 추가
+		

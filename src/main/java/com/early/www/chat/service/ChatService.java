@@ -31,7 +31,7 @@ public interface ChatService {
 	
 	public Map<String, Object> getReadSuccessLines(String roomKey, String username, String startLineKey);
 
-	public Map<String, String> putLikeEvent(String username, ChatLineEventVO chatLineEventVO);
+	public JSONObject putLikeEvent(String username, ChatLineEventVO chatLineEventVO);
 	
 	
 }

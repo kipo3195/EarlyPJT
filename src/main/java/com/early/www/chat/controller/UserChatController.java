@@ -71,16 +71,30 @@ public class UserChatController {
 			String username = (String) request.getAttribute("username");
 			
 			if(username != null && chatLineEventVO != null) {
-				Map<String, String> map = chatService.putLikeEvent(username, chatLineEventVO);
-				if(!map.isEmpty()) {
+				JSONObject resultJson = chatService.putLikeEvent(username, chatLineEventVO);
+				// new로 객체 생성은함. 다만, 오류가 나서 담기지 않을 가능성이 있으므로 isEmpty로 비교 
+				if(!resultJson.isEmpty()) {
 					
-					resultMap.putAll(map);
+					result = true;
+					
+					// 웹소켓 key
+					resultJson.put("type", "lineEvent");
+					resultJson.put("roomKey", chatLineEventVO.getRoomKey());
+					resultJson.put("lineKey", chatLineEventVO.getLineKey());
+					
+					// 웹소켓으로 pub
+					String dest = "/topic/room/"+chatLineEventVO.getRoomKey();
+					//System.out.println(resultJson.toString());
+					simpMessagingTemplate.convertAndSend(dest, resultJson.toJSONString());
+					
 				}
 			}
 			
- 			resultMap.put("result", String.valueOf(result));
+			resultMap.put("result", String.valueOf(result));
+ 			
 		}
-		
+
+		// 성공, 실패 여부만 처리하고 결과는 웹소켓으로 pub 함
 		return resultMap;
 		
 	}
