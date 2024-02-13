@@ -55,6 +55,34 @@ public class UserChatController {
 		return resultMap;
 	}
 	
+	// 라인 별 이벤트 사용자 조회
+	@PostMapping("/user/getChatLineEventUser")
+	public Map<String, String> getChatLineEventUser(HttpServletRequest request, HttpServletResponse response, @RequestBody ChatLineEventVO chatLineEventVO){
+		
+		Map<String, String> resultMap = new HashMap<String, String>();
+		String error = (String) response.getHeader("error_code");
+		boolean result = false;
+		
+		if(error != null) {
+			resultMap.put("flag", "fail");
+			resultMap.put("error_code", response.getHeader("error_code"));
+		}else {
+			
+			String username = (String) request.getAttribute("username");
+			if(username != null && chatLineEventVO != null) {
+				
+				JSONObject resultJson = chatService.getChatLineEventUser(chatLineEventVO.getRoomKey(), chatLineEventVO.getLineKey());
+				if(resultJson != null) {
+					result = true;
+					resultMap.put("users", resultJson.toString());
+				}
+			}
+			resultMap.put("result", String.valueOf(result));
+		}
+		return resultMap;
+	}
+	
+	
 	// 좋아요 이벤트 처리 
 	// 프로젝트의 문서 참조
 	@PostMapping("/user/putChatLineEvent")
@@ -447,3 +475,5 @@ public class UserChatController {
 		
 	
 }
+
+

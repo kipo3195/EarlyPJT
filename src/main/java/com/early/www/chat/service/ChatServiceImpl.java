@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -532,6 +533,64 @@ public class ChatServiceImpl implements ChatService {
 				return null;
 			}
 		});
+		
+		return json;
+	}
+
+
+	@Override
+	public JSONObject getChatLineEventUser(String roomKey, String lineKey) {
+		
+		RedisSerializer keySerializer = redisTemplate.getKeySerializer();
+		RedisSerializer valueSerializer = redisTemplate.getValueSerializer();
+		RedisSerializer hashKeySerializer = redisTemplate.getHashKeySerializer();
+		RedisSerializer hashValueSerializer = redisTemplate.getHashValueSerializer();
+		
+		JSONObject json = new JSONObject();
+		redisTemplate.execute(new RedisCallback<Object>() {
+			
+			@Override
+			public Object doInRedis(RedisConnection connection) throws DataAccessException {
+				
+				String key = "good:"+roomKey+":"+lineKey;
+				Set<byte[]> goodUsers = connection.sMembers(keySerializer.serialize(key));
+				if(goodUsers != null && !goodUsers.isEmpty()) {
+					JSONArray userJson = new JSONArray();
+					Object[] arr = goodUsers.toArray();
+					for(int i = 0; i < arr.length; i++) {
+						String user = (String) valueSerializer.deserialize((byte[]) arr[i]);
+						userJson.add(user);
+					}
+					json.put("good", userJson);
+				}
+
+				key = "check:"+roomKey+":"+lineKey;
+				Set<byte[]> checkUsers = connection.sMembers(keySerializer.serialize(key));
+				if(checkUsers != null && !checkUsers.isEmpty()) {
+					JSONArray userJson = new JSONArray();
+					Object[] arr = checkUsers.toArray();
+					for(int i = 0; i < arr.length; i++) {
+						String user = (String) valueSerializer.deserialize((byte[]) arr[i]);
+						userJson.add(user);
+					}
+					json.put("check", userJson);
+				}
+				
+				key = "like:"+roomKey+":"+lineKey;
+				Set<byte[]> likeUsers = connection.sMembers(keySerializer.serialize(key));
+				if(likeUsers != null && !likeUsers.isEmpty()) {
+					JSONArray userJson = new JSONArray();
+					Object[] arr = likeUsers.toArray();
+					for(int i = 0; i < arr.length; i++) {
+						String user = (String) valueSerializer.deserialize((byte[]) arr[i]);
+						userJson.add(user);
+					}
+					json.put("like", userJson);
+				}
+				return null;
+			}
+		});
+		
 		
 		return json;
 	}

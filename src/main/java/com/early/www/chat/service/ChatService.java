@@ -33,5 +33,7 @@ public interface ChatService {
 
 	public JSONObject putLikeEvent(String username, ChatLineEventVO chatLineEventVO);
 	
+	public JSONObject getChatLineEventUser(String roomKey, String lineKey);
+	
 	
 }

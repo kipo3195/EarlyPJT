@@ -226,3 +226,7 @@
 	2. 채팅방 라인 이벤트 (like, check, good) API 추가 /user/putChatLineEvent
 		- 변경된 타입만 해당 방을 구독하고 있는 채널에 pub 하는 로직 추가
 		
+2024.02.13
+	1. 채팅방 라인의 이벤트 사용자 조회 API 개발 /user/getChatLineEventUser
+			
+		
