@@ -32,6 +32,9 @@ public class ChatMain{
 	@Column(name="chat_sender", length=100)
 	private String chatSender;
 	
+	@Column(name="chat_sender_name", length=100)
+	private String chatSenderName;
+	
 	@Column(name="chat_receiver",  length=3000)
 	private String chatReceiver;
 	

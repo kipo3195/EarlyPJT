@@ -228,5 +228,7 @@
 		
 2024.02.13
 	1. 채팅방 라인의 이벤트 사용자 조회 API 개발 /user/getChatLineEventUser
-			
 		
+2024.02.18
+	1. 채팅방 입장시 라인조회 API, 라인 더 불러오기 API 쿼리 수정(sender_id -> chat_sender_name)	
+		- /user/chatRoomLine, /user/chatRoomLineAppend

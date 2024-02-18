@@ -109,6 +109,7 @@ public class ChatServiceImpl implements ChatService {
 		// 라인 조회 DB
 		List<ChatMain> chatMainList = chatMainRepository.findByChatRoomKey(chatRoomKey);
 		
+		System.out.println(chatMainList);
 		RedisSerializer hashKeySerializer = redisTemplate.getHashKeySerializer();
 		RedisSerializer hashValueSerializer = redisTemplate.getHashValueSerializer();
 		RedisSerializer keySerializer = redisTemplate.getKeySerializer();

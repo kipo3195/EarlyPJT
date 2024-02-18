@@ -375,6 +375,7 @@ public class UserChatController {
 					
 					/* 라인 리스트 조회 */
 					List<ChatMain> lineList = chatService.getChatRoomLine(chatRoomKey);
+					System.out.println(lineList);
 					if(lineList != null && !lineList.isEmpty()) {
 						ObjectMapper mapper = new ObjectMapper();
 						
