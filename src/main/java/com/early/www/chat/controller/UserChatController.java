@@ -12,6 +12,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -54,6 +56,73 @@ public class UserChatController {
 		
 		return resultMap;
 	}
+	
+	// 채팅방 참여자 조회 
+	@PostMapping("/user/getChatRoomUsers")
+	public Map<String, String> getChatRoomUsers(HttpServletRequest request, HttpServletResponse response, @RequestBody String chatRoomKey){
+		
+		
+		Map<String, String> resultMap = new HashMap<String, String>();
+		String error = (String) response.getHeader("error_code");
+		boolean result = false;
+		if(error != null) {
+			resultMap.put("flag", "fail");
+			resultMap.put("error_code", response.getHeader("error_code"));
+		}else {
+			
+			if(chatRoomKey != null && !chatRoomKey.isEmpty()) {
+				
+				JSONParser parser = new JSONParser();
+				try {
+					JSONObject json= (JSONObject) parser.parse(chatRoomKey);
+					
+					chatRoomKey = (String) json.get("chatRoomKey");
+					
+					if(chatRoomKey != null && !chatRoomKey.isEmpty()) {
+						List<EarlyUser> EarlyUserList = chatService.getChatRoomUsers(chatRoomKey);
+						System.out.println(EarlyUserList);
+						ObjectMapper mapper = new ObjectMapper();
+						
+						List<String> list = new ArrayList<String>();
+						
+						for(int i = 0; i < EarlyUserList.size(); i++) {
+							EarlyUser earlyUser = EarlyUserList.get(i);
+							
+							try {
+								list.add(mapper.writeValueAsString(earlyUser));
+							} catch (JsonProcessingException e) {
+								e.printStackTrace();
+							}
+						}
+						
+						resultMap.put("result", list.toString());
+						
+					}else {
+						System.out.println("getChatRoomUsers roomkey is null !");
+						resultMap.put("result", "error");
+						return resultMap;
+					}
+				
+				} catch (ParseException e) {
+					e.printStackTrace();
+					resultMap.put("result", "error");
+					return resultMap;
+				}
+				
+			}else {
+
+				resultMap.put("result", "error");
+				
+			}
+			
+		}
+		
+		
+		
+		return resultMap;
+		
+	}
+	
 	
 	// 라인 별 이벤트 사용자 조회
 	@PostMapping("/user/getChatLineEventUser")

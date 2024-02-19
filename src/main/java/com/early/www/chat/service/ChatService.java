@@ -8,6 +8,7 @@ import org.json.simple.JSONObject;
 import com.early.www.chat.VO.ChatLineEventVO;
 import com.early.www.chat.model.ChatMain;
 import com.early.www.chat.model.ChatRoom;
+import com.early.www.user.model.EarlyUser;
 
 public interface ChatService {
 
@@ -34,6 +35,8 @@ public interface ChatService {
 	public JSONObject putLikeEvent(String username, ChatLineEventVO chatLineEventVO);
 	
 	public JSONObject getChatLineEventUser(String roomKey, String lineKey);
+	
+	public List<EarlyUser> getChatRoomUsers(String roomKey);
 	
 	
 }

@@ -23,6 +23,8 @@ import com.early.www.chat.model.ChatMain;
 import com.early.www.chat.model.ChatRoom;
 import com.early.www.repository.ChatMainRepository;
 import com.early.www.repository.ChatRoomRepository;
+import com.early.www.repository.EarlyUserRepository;
+import com.early.www.user.model.EarlyUser;
 import com.early.www.util.CommonConst;
 
 @Service
@@ -33,6 +35,10 @@ public class ChatServiceImpl implements ChatService {
 	
 	@Autowired
 	ChatMainRepository chatMainRepository;
+	
+	@Autowired
+	EarlyUserRepository earlyUserRepository;
+	
 	
 	@Autowired
 	RedisTemplate<String, Object> redisTemplate;
@@ -594,6 +600,22 @@ public class ChatServiceImpl implements ChatService {
 		
 		
 		return json;
+	}
+
+
+	@Override
+	public List<EarlyUser> getChatRoomUsers(String roomKey) {
+		
+		List<EarlyUser> list = null;
+		
+		
+		if(roomKey != null) {
+			// TODO limit의 min데이터를 동적으로 처리해서 던질 것
+			list = earlyUserRepository.findByChatRoomKeyAndMin(roomKey, 0);
+			
+		}
+		
+		return list;
 	}
 
 

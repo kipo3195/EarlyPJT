@@ -232,3 +232,8 @@
 2024.02.18
 	1. 채팅방 입장시 라인조회 API, 라인 더 불러오기 API 쿼리 수정(sender_id -> chat_sender_name)	
 		- /user/chatRoomLine, /user/chatRoomLineAppend
+		
+2024.02.19
+	1. 채팅방 참여자 조회 API 개발 
+		- /user/getChatRoomUsers
+		- 참여자 조회 쿼리 작성 
