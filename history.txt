@@ -237,3 +237,9 @@
 	1. 채팅방 참여자 조회 API 개발 
 		- /user/getChatRoomUsers
 		- 참여자 조회 쿼리 작성 
+		
+2024.02.20
+	1. 채팅방 참여자 조회 API 수정 (/user/getChatRoomUsers)
+		- requestBody 수정 : 기존 @requestBody String chatRoomKey -> @requestBody ChatRoomUserVO chatRoomUserVO
+				-> @requestBody는 한번의 request에 하나의 Object만 받을 수 있기 때문..
+		- ChatRoomUserVO에 limitCnt를 받아서 조회 최소 기준 동적 처리 (단, 리액트에서 변수에 최소 기준을 가지고 있는 로직 필요함)		

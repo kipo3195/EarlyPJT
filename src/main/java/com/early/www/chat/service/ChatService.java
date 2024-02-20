@@ -36,7 +36,7 @@ public interface ChatService {
 	
 	public JSONObject getChatLineEventUser(String roomKey, String lineKey);
 	
-	public List<EarlyUser> getChatRoomUsers(String roomKey);
+	public List<EarlyUser> getChatRoomUsers(String roomKey, int limitCnt);
 	
 	
 }

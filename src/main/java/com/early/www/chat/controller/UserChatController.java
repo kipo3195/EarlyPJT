@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.early.www.chat.VO.ChatLineEventVO;
 import com.early.www.chat.VO.ChatReadVO;
+import com.early.www.chat.VO.ChatRoomUserVO;
 import com.early.www.chat.model.ChatMain;
 import com.early.www.chat.model.ChatRoom;
 import com.early.www.chat.service.ChatService;
@@ -58,8 +59,8 @@ public class UserChatController {
 	}
 	
 	// 채팅방 참여자 조회 
-	@PostMapping("/user/getChatRoomUsers")
-	public Map<String, String> getChatRoomUsers(HttpServletRequest request, HttpServletResponse response, @RequestBody String chatRoomKey){
+	@PostMapping("/user/getChatRoomUsers") // @requestBody는 한번의 request에 하나의 Object만 받을 수 있다. @RequestBody String A,  @RequestBody String B 안됨.
+	public Map<String, String> getChatRoomUsers(HttpServletRequest request, HttpServletResponse response, @RequestBody ChatRoomUserVO chatRoomUserVO){
 		
 		
 		Map<String, String> resultMap = new HashMap<String, String>();
@@ -70,49 +71,38 @@ public class UserChatController {
 			resultMap.put("error_code", response.getHeader("error_code"));
 		}else {
 			
-			if(chatRoomKey != null && !chatRoomKey.isEmpty()) {
+			if(chatRoomUserVO != null) {
 				
-				JSONParser parser = new JSONParser();
-				try {
-					JSONObject json= (JSONObject) parser.parse(chatRoomKey);
+				String chatRoomKey = chatRoomUserVO.getChatRoomKey();
+				int limitCnt = chatRoomUserVO.getLimitCnt();
+				
+				if(chatRoomKey != null && !chatRoomKey.isEmpty()) {
+					List<EarlyUser> EarlyUserList = chatService.getChatRoomUsers(chatRoomKey, limitCnt);
 					
-					chatRoomKey = (String) json.get("chatRoomKey");
+					ObjectMapper mapper = new ObjectMapper();
 					
-					if(chatRoomKey != null && !chatRoomKey.isEmpty()) {
-						List<EarlyUser> EarlyUserList = chatService.getChatRoomUsers(chatRoomKey);
-						System.out.println(EarlyUserList);
-						ObjectMapper mapper = new ObjectMapper();
+					List<String> list = new ArrayList<String>();
+					
+					for(int i = 0; i < EarlyUserList.size(); i++) {
+						EarlyUser earlyUser = EarlyUserList.get(i);
 						
-						List<String> list = new ArrayList<String>();
-						
-						for(int i = 0; i < EarlyUserList.size(); i++) {
-							EarlyUser earlyUser = EarlyUserList.get(i);
-							
-							try {
-								list.add(mapper.writeValueAsString(earlyUser));
-							} catch (JsonProcessingException e) {
-								e.printStackTrace();
-							}
+						try {
+							list.add(mapper.writeValueAsString(earlyUser));
+						} catch (JsonProcessingException e) {
+							e.printStackTrace();
 						}
-						
-						resultMap.put("result", list.toString());
-						
-					}else {
-						System.out.println("getChatRoomUsers roomkey is null !");
-						resultMap.put("result", "error");
-						return resultMap;
 					}
-				
-				} catch (ParseException e) {
-					e.printStackTrace();
+					
+					resultMap.put("result", list.toString());
+					
+				}else {
+					System.out.println("getChatRoomUsers roomkey is null !");
 					resultMap.put("result", "error");
 					return resultMap;
 				}
 				
 			}else {
-
 				resultMap.put("result", "error");
-				
 			}
 			
 		}

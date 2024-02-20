@@ -604,20 +604,15 @@ public class ChatServiceImpl implements ChatService {
 
 
 	@Override
-	public List<EarlyUser> getChatRoomUsers(String roomKey) {
+	public List<EarlyUser> getChatRoomUsers(String roomKey, int limitCnt) {
 		
 		List<EarlyUser> list = null;
 		
-		
 		if(roomKey != null) {
-			// TODO limit의 min데이터를 동적으로 처리해서 던질 것
-			list = earlyUserRepository.findByChatRoomKeyAndMin(roomKey, 0);
-			
+			list = earlyUserRepository.findByChatRoomKeyAndMin(roomKey, limitCnt);
 		}
-		
 		return list;
 	}
-
 
 
 }
