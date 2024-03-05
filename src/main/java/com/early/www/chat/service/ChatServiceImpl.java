@@ -615,4 +615,17 @@ public class ChatServiceImpl implements ChatService {
 	}
 
 
+	@Override
+	public List<EarlyUser> getChatRoomUserList(String sender) {
+		List<EarlyUser> list = null;
+		
+		if(sender != null) {
+			list = earlyUserRepository.findBySender(sender);
+			System.out.println("chatService Impl list : "+list);
+		}
+		
+		return list;
+	}
+
+
 }

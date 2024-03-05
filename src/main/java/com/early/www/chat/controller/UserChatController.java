@@ -57,6 +57,46 @@ public class UserChatController {
 		
 		return resultMap;
 	}
+	// 채팅방 생성시 사용자 조회 
+	@PostMapping("/user/getCreateChatRoomUsers")
+	public Map<String, String> getCreateChatRoomUsers(HttpServletRequest request, HttpServletResponse response, @RequestBody String sender){
+		Map<String, String> resultMap = new HashMap<String, String>();
+		
+		String error = (String) response.getHeader("error_code");
+		if(error != null) {
+			resultMap.put("flag", "fail");
+			resultMap.put("error_code", response.getHeader("error_code"));
+		}else {
+			if(sender != null) {
+				System.out.println("userchatController sender : " +sender);
+				List<EarlyUser> EarlyUserList = chatService.getChatRoomUserList(sender);
+				
+				ObjectMapper mapper = new ObjectMapper();
+				
+				List<String> list = new ArrayList<String>();
+				
+				for(int i = 0; i < EarlyUserList.size(); i++) {
+					EarlyUser earlyUser = EarlyUserList.get(i);
+					
+					try {
+						list.add(mapper.writeValueAsString(earlyUser));
+					} catch (JsonProcessingException e) {
+						e.printStackTrace();
+					}
+				}
+				
+				resultMap.put("userList", list.toString());
+			}else {
+				System.out.println("getCreateChatRoomUsers sender is null !");
+				resultMap.put("result", "error");
+				return resultMap;
+			}
+			
+		}
+		
+		return resultMap;
+		
+	}
 	
 	// 채팅방 참여자 조회 
 	@PostMapping("/user/getChatRoomUsers") // @requestBody는 한번의 request에 하나의 Object만 받을 수 있다. @RequestBody String A,  @RequestBody String B 안됨.
