@@ -39,6 +39,8 @@ public interface ChatService {
 	public List<EarlyUser> getChatRoomUsers(String roomKey, int limitCnt);
 
 	public List<EarlyUser> getChatRoomUserList(String sender);
+
+	public String putChatRoom(ChatRoom chatroom);
 	
 	
 }

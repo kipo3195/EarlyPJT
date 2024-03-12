@@ -92,9 +92,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 			// jwt header에 넘어온 token을 통해서 정상적인 사용자인지 체킹
 			String jwtToken = jwtHeader.replace("Bearer ", "");
 			try {
-				System.out.println("1");
 				 username = JWT.require(Algorithm.HMAC512("early")).build().verify(jwtToken).getClaim("username").asString();
-				 System.out.println("2"); 
 			}catch(TokenExpiredException e) {
 				// access token 만료되었을때 
 				String nowDate = null;

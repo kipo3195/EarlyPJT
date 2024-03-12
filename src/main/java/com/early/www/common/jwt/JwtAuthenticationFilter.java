@@ -58,6 +58,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 				System.out.println(om);
 				EarlyUser earlyUser = om.readValue(request.getInputStream(), EarlyUser.class);
 				
+				
 				// 토큰생성 
 				UsernamePasswordAuthenticationToken authenticationToken 
 						= new UsernamePasswordAuthenticationToken(earlyUser.getUsername(), earlyUser.getPassword());

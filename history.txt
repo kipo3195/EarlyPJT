@@ -247,3 +247,10 @@
 2024.03.05
 	1. 채팅방 생성시 사용자 리스트 조회 API 생성 (/user/getCreateChatRoomUsers)
 			
+2024.03.12
+	1. 채팅방 생성 API 개발 (/user/putChatRoom)		
+		- sender, chatRoomKey, chatRoomUsers, chatRoomTitle, lastLineKey : '0', createRoomDate
+		   : tbl_chat_room 저장
+		 	 -> chatRoomUsers(참여자)는 클라이언트에서 만들어서 보내주는 대로 저장함. | 로 구분함. 
+		 	 -> chatRoomKey는 생성자 ID_생성시간
+			

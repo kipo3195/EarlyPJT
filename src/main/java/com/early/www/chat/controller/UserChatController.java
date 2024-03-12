@@ -57,6 +57,28 @@ public class UserChatController {
 		
 		return resultMap;
 	}
+	
+	// 채팅방 생성 
+	@PostMapping("/user/putChatRoom")
+	public Map<String, String> putChatRoom(HttpServletRequest request, HttpServletResponse response, @RequestBody ChatRoom chatroom){
+		
+		Map<String, String> resultMap = new HashMap<String, String>();
+		
+		String error = (String) response.getHeader("error_code");
+		if(error != null) {
+			resultMap.put("flag", "fail");
+			resultMap.put("error_code", response.getHeader("error_code"));
+		}else {
+			System.out.println(chatroom);
+			String result = chatService.putChatRoom(chatroom);
+			
+			resultMap.put("flag", result);
+			
+		}
+		
+		return resultMap;
+	}
+	
 	// 채팅방 생성시 사용자 조회 
 	@PostMapping("/user/getCreateChatRoomUsers")
 	public Map<String, String> getCreateChatRoomUsers(HttpServletRequest request, HttpServletResponse response, @RequestBody String sender){

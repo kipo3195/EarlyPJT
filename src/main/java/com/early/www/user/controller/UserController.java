@@ -72,6 +72,8 @@ public class UserController {
 	public Map<String, String> tokenVerification(HttpServletResponse response){
 		Map<String, String> resultMap = new HashMap<String, String>();
 		
+		System.out.println("tokenVerification 호출 !!!!");
+		
 		if(response.getHeader("error_code") != null) {
 			resultMap.put("flag", "fail");
 			resultMap.put("error_code", response.getHeader("error_code"));
@@ -115,7 +117,7 @@ public class UserController {
 	// 회원가입 전 ID 중복 체크 API
 	@GetMapping("/idDupCheck")
 	@ResponseBody
-	public String idDupCheck(@RequestParam String username) {
+	public Map<String, String> idDupCheck(@RequestParam String username) {
 		
 		System.out.println("idDupCheck id : " + username);
 		
@@ -123,11 +125,15 @@ public class UserController {
 
 		System.out.println("[UserController] idDupCheck result : "+ result);
 		
+		Map<String, String> resultMap = new HashMap<>();
+		
 		if(result) {
-			return "true";
+			// 중복
+			resultMap.put("result", "true");
 		}else {
-			return "false";
+			resultMap.put("result", "false");
 		}
+		return resultMap;
 	}
 	
 	// 회원가입 요청 API

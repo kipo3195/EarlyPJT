@@ -628,4 +628,22 @@ public class ChatServiceImpl implements ChatService {
 	}
 
 
+	@Override
+	public String putChatRoom(ChatRoom chatroom) {
+		
+		ChatRoom createRoom = chatRoomRepository.save(chatroom);
+		
+		if(createRoom != null) {
+			if(chatroom.getChatRoomKey().equals(createRoom.getChatRoomKey())){
+				return "success";
+			}else {
+				return "false";
+			}
+		}else {
+			return "false";
+		}
+		
+	}
+
+
 }
