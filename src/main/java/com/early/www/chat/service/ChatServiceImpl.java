@@ -19,8 +19,10 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Service;
 
 import com.early.www.chat.VO.ChatLineEventVO;
+import com.early.www.chat.model.ChatList;
 import com.early.www.chat.model.ChatMain;
 import com.early.www.chat.model.ChatRoom;
+import com.early.www.repository.ChatListRepository;
 import com.early.www.repository.ChatMainRepository;
 import com.early.www.repository.ChatRoomRepository;
 import com.early.www.repository.EarlyUserRepository;
@@ -32,6 +34,9 @@ public class ChatServiceImpl implements ChatService {
 
 	@Autowired
 	ChatRoomRepository chatRoomRepository;
+	
+	@Autowired
+	ChatListRepository chatListRepository;
 	
 	@Autowired
 	ChatMainRepository chatMainRepository;
@@ -632,9 +637,17 @@ public class ChatServiceImpl implements ChatService {
 	public String putChatRoom(ChatRoom chatroom) {
 		
 		ChatRoom createRoom = chatRoomRepository.save(chatroom);
-		
+		// TODO 트랜잭션 처리 ROOM과 LIST
 		if(createRoom != null) {
 			if(chatroom.getChatRoomKey().equals(createRoom.getChatRoomKey())){
+				
+				String userList[] = createRoom.getChatRoomUsers().split("[|]");
+				for(int i = 0 ; i < userList.length; i++) {
+					ChatList chatList = new ChatList();
+					chatList.setChatListUser(userList[i]);
+					chatList.setChatRoomKey(createRoom.getChatRoomKey());
+					chatListRepository.save(chatList);
+				}
 				return "success";
 			}else {
 				return "false";

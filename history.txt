@@ -253,4 +253,7 @@
 		   : tbl_chat_room 저장
 		 	 -> chatRoomUsers(참여자)는 클라이언트에서 만들어서 보내주는 대로 저장함. | 로 구분함. 
 		 	 -> chatRoomKey는 생성자 ID_생성시간
-			
+
+2024.03.14
+	1. 채팅방 생성 API 수정
+		- tbl_chat_list 저장 추가			

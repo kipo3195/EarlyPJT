@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import com.early.www.chat.model.ChatList;
 import com.early.www.chat.model.ChatRoom;
 
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long>{
@@ -14,6 +15,8 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long>{
 	@Query(nativeQuery = true, value ="select * from tbl_chat_list list inner join tbl_chat_room room on list.chat_room_key = room.chat_room_key "
 			+ " where list.chat_list_user = :username order by room.last_line_key desc limit 0, 10")
 	public List<ChatRoom> findByChatListUser(String username);
+
+
 	
 	
 }
