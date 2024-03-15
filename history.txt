@@ -256,4 +256,8 @@
 
 2024.03.14
 	1. 채팅방 생성 API 수정
-		- tbl_chat_list 저장 추가			
+		- tbl_chat_list 저장 추가
+		
+2024.03.15
+	1. 채팅입력시 tbl_chat_room의 last_line_key update 추가
+	2. 채팅방 생성시 서버에서 linekey를 발급하여 room의 last_line_update 로직 추가			

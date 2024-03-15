@@ -16,6 +16,9 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long>{
 			+ " where list.chat_list_user = :username order by room.last_line_key desc limit 0, 10")
 	public List<ChatRoom> findByChatListUser(String username);
 
+	@Query(nativeQuery = true, value = "update tbl_chat_room set last_line_key = :lineKey where chat_room_key = :roomKey")
+	public void save(String roomKey, String lineKey);
+
 
 	
 	

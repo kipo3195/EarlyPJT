@@ -82,6 +82,7 @@ public class ChatServiceImpl implements ChatService {
 	@Override
 	public List<ChatRoom> getMyChatList(String username) {
 		
+		System.out.println("채팅 리스트 조회 시점 ");
 		List<ChatRoom> chatList = chatRoomRepository.findByChatListUser(username);
 		if(chatList != null && !chatList.isEmpty()) {
 			
@@ -111,6 +112,15 @@ public class ChatServiceImpl implements ChatService {
 		System.out.println("[ChatSericeImpl] main : " + main);
 		
 		chatMainRepository.save(main);
+	}
+	
+	// 채팅방 lastLinkey update
+	@Override
+	public void putChatRoom(String roomKey, String lineKey) {
+		
+		System.out.println("채팅 발송으로 인한 last line key update");
+		chatRoomRepository.save(roomKey, lineKey);
+		
 	}
 
 	// 채팅방 데이터 조회 (최초)
@@ -657,6 +667,9 @@ public class ChatServiceImpl implements ChatService {
 		}
 		
 	}
+
+
+
 
 
 }

@@ -69,8 +69,15 @@ public class UserChatController {
 			resultMap.put("flag", "fail");
 			resultMap.put("error_code", response.getHeader("error_code"));
 		}else {
-			System.out.println(chatroom);
+			//System.out.println(chatroom);
 			String result = chatService.putChatRoom(chatroom);
+			
+			if(result != null && result.equals("success")) {
+				// 방 생성시 line key를 서버에서 발급하는 이유?
+				// 라인키 발급 -> ~ 가 방을 생성하였습니다 라인저장 + 채팅방 last_line_key update
+				String lineKey = chatService.getLineKey();
+				chatService.putChatRoom(chatroom.getChatRoomKey(), lineKey);
+			}
 			
 			resultMap.put("flag", result);
 			
@@ -385,6 +392,9 @@ public class UserChatController {
 		/* 라인키 생성 및 DB 저장 */
 		// TODO 채팅 내용 암호화 및 QueueThread 방식으로 전환 */ 
 		chatService.putChatMain(main); 
+		
+		// Room의 LastLineKey update 
+		chatService.putChatRoom(roomKey, lineKey);
 		
 		/* redis 해당 라인의 읽지 않은 사용자 저장 및 조회 */
 		String unreadCount = chatService.getUnreadLineCount(roomKey, lineKey, receiver, sender);

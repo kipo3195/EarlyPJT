@@ -17,6 +17,8 @@ public interface ChatService {
 	public List<ChatRoom> getMyChatList(String username);
 
 	public void putChatMain(ChatMain main);
+	
+	public void putChatRoom(String roomKey, String lineKey);
 
 	public List<ChatMain> getChatRoomLine(String chatRoomKey);
 	
