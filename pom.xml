@@ -13,6 +13,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>early</name>
 	<description>early project</description>
+	<packaging>jar</packaging>  <!-- 20240317 배포방식 지정 -->
 	<properties>
 		<java.version>11</java.version>
 	</properties>

@@ -109,9 +109,11 @@ public class ChatServiceImpl implements ChatService {
 		main.setChatLineKey(main.getChatLineKey());
 		main.setSendDate(main.getChatLineKey());
 		main.setChatDelFlag("N");
-		System.out.println("[ChatSericeImpl] main : " + main);
+		//System.out.println("[ChatSericeImpl] main : " + main);
 		
+		System.out.println("main 저장");
 		chatMainRepository.save(main);
+		
 	}
 	
 	// 채팅방 lastLinkey update

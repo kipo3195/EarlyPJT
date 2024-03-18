@@ -388,13 +388,17 @@ public class UserChatController {
 		String data = main.getChatContents();
 		String lineKey = main.getChatLineKey();
 		
+		/* Room의 LastLineKey update */
+		// room이 line 보다 먼저 처리 되어야 하는 이유 20240318
+		// 리액트에서 웹소켓으로 publish 하면 해당 메소드가 호출 된다.
+		// 그와 동시에 리액트에서는 비동기로 리스트를 다시 불러오게끔 처리 되는데 리스트를 조회 하는 시점보다 room의 lastlinekey를 update하는 것이 늦는 케이스가 있었다.
+		// room의 lastlineKey를 먼저 업데이트 하는 것으로 순서를 변경하여 조회 이전에 정렬 기준이 되는 lastlinekey를 update 하는 것으로 수정하였다. 
+		chatService.putChatRoom(roomKey, lineKey);
 		
 		/* 라인키 생성 및 DB 저장 */
 		// TODO 채팅 내용 암호화 및 QueueThread 방식으로 전환 */ 
 		chatService.putChatMain(main); 
 		
-		// Room의 LastLineKey update 
-		chatService.putChatRoom(roomKey, lineKey);
 		
 		/* redis 해당 라인의 읽지 않은 사용자 저장 및 조회 */
 		String unreadCount = chatService.getUnreadLineCount(roomKey, lineKey, receiver, sender);
