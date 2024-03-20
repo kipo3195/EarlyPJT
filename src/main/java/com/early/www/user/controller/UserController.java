@@ -18,7 +18,10 @@ import com.early.www.chat.service.ChatService;
 import com.early.www.common.service.CommonService;
 import com.early.www.user.model.EarlyUser;
 
+import lombok.extern.slf4j.Slf4j;
+
 @RestController
+@Slf4j
 public class UserController {
 	
 	@Autowired
@@ -72,8 +75,6 @@ public class UserController {
 	public Map<String, String> tokenVerification(HttpServletResponse response){
 		Map<String, String> resultMap = new HashMap<String, String>();
 		
-		System.out.println("tokenVerification 호출 !!!!");
-		
 		if(response.getHeader("error_code") != null) {
 			resultMap.put("flag", "fail");
 			resultMap.put("error_code", response.getHeader("error_code"));
@@ -91,12 +92,10 @@ public class UserController {
 	@ResponseBody
 	public Map<String, String> loginRequest(String username, String password, String token, HttpServletResponse response, HttpServletRequest request) {
 		
-		System.out.println("[UserController] loginRequest ");
 		Map<String, String> resultMap = new HashMap<String, String>();
 		
 		if(response.getHeader("Authorization") != null) {
 			username = (String) request.getAttribute("username");
-			System.out.println("userController : " + username);
 			// 채팅, 쪽지의 미확인 건수 조회 
 			Map<String, String> allUnreadMap = chatService.getAllUnreadCnt(username);
 			
@@ -105,7 +104,6 @@ public class UserController {
 			resultMap.put("chat", allUnreadMap.get("chat"));
 			//resultMap.put("msg", allUnreadMap.get("msg"));
 		}else {
-			System.out.println("여기호출");
 			resultMap.put("flag", "fail");
 			
 		}
@@ -119,11 +117,10 @@ public class UserController {
 	@ResponseBody
 	public Map<String, String> idDupCheck(@RequestParam String username) {
 		
-		System.out.println("idDupCheck id : " + username);
+		log.info("[/idDupCheck] check user id : {}", username);
 		
 		boolean result = service.existsUsername(username);
 
-		System.out.println("[UserController] idDupCheck result : "+ result);
 		
 		Map<String, String> resultMap = new HashMap<>();
 		
@@ -133,6 +130,8 @@ public class UserController {
 		}else {
 			resultMap.put("result", "false");
 		}
+		
+		log.info("[/idDupCheck] check user id : {} : result : {}", username, result ? "already exists":"available");
 		return resultMap;
 	}
 	
@@ -140,6 +139,7 @@ public class UserController {
 	// react 버전 axios를 통한 통신으로 데이터 전송시 json 형태로 들어오기 때문에 @RequestBody 어노테이션 필요함.
 	@PostMapping("/join")
 	public Map<String, String> joinRequest(@RequestBody EarlyUser user) {
+		
 		
 		Map<String, String> resultMap = new HashMap<String, String>();
 		
@@ -150,6 +150,7 @@ public class UserController {
 			resultMap.put("flag", "fail");
 		}
 		
+		log.info("[/join] user id : {} result : {}", user.getUsername(), result.equals("success") ? "success":"fail");
 		return resultMap;
 	}
 	
@@ -163,7 +164,6 @@ public class UserController {
 	@GetMapping("/user/main")
 	public Map<String, String> userMainRequest(HttpServletResponse response) {
 		
-		System.out.println("[UserController] userMainRequest ");
 		Map<String, String> resultMap = new HashMap<String, String>();
 		
 		if(response.getHeader("error_code") != null) {
@@ -179,7 +179,6 @@ public class UserController {
 	@GetMapping("/user/logout")
 	public Map<String, String> userLogoutRequest(HttpServletResponse response) {
 		
-		System.out.println("[UserController] userLogoutRequest ");
 		Map<String, String> resultMap = new HashMap<String, String>();
 		
 		if(response.getHeader("error_code") != null) {

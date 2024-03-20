@@ -9,7 +9,7 @@ public class WebSocketHandler extends TextWebSocketHandler{
 	@Override
 	protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
 	
-		System.out.println("[WebSocketHandler] session : " + session + "message : "+ message);
+		//System.out.println("[WebSocketHandler] session : " + session + "message : "+ message);
 	
 	}
 

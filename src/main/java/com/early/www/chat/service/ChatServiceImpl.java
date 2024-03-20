@@ -82,7 +82,6 @@ public class ChatServiceImpl implements ChatService {
 	@Override
 	public List<ChatRoom> getMyChatList(String username) {
 		
-		System.out.println("채팅 리스트 조회 시점 ");
 		List<ChatRoom> chatList = chatRoomRepository.findByChatListUser(username);
 		if(chatList != null && !chatList.isEmpty()) {
 			
@@ -109,9 +108,7 @@ public class ChatServiceImpl implements ChatService {
 		main.setChatLineKey(main.getChatLineKey());
 		main.setSendDate(main.getChatLineKey());
 		main.setChatDelFlag("N");
-		//System.out.println("[ChatSericeImpl] main : " + main);
 		
-		System.out.println("main 저장");
 		chatMainRepository.save(main);
 		
 	}
@@ -120,7 +117,6 @@ public class ChatServiceImpl implements ChatService {
 	@Override
 	public void putChatRoom(String roomKey, String lineKey) {
 		
-		System.out.println("채팅 발송으로 인한 last line key update");
 		chatRoomRepository.save(roomKey, lineKey);
 		
 	}
@@ -132,7 +128,6 @@ public class ChatServiceImpl implements ChatService {
 		// 라인 조회 DB
 		List<ChatMain> chatMainList = chatMainRepository.findByChatRoomKey(chatRoomKey);
 		
-		System.out.println(chatMainList);
 		RedisSerializer hashKeySerializer = redisTemplate.getHashKeySerializer();
 		RedisSerializer hashValueSerializer = redisTemplate.getHashValueSerializer();
 		RedisSerializer keySerializer = redisTemplate.getKeySerializer();
@@ -397,7 +392,6 @@ public class ChatServiceImpl implements ChatService {
 //					String unreadLine = (String) valueSerializer.deserialize((byte[]) arr[i]);
 //					key = "myUnreadLine:"+roomKey+":"+username;
 //					connection.zRem(keySerializer.serialize(key), valueSerializer.serialize(unreadLine));
-//					// System.out.println("나의 미확인 건수 삭제 key: " + key+", unreadLine : "+unreadLine);
 //					
 //					// 해당 라인의 미확인 사용자 중 나 삭제
 //					key = "unreadLineUsers:"+roomKey+":"+unreadLine;
@@ -467,7 +461,6 @@ public class ChatServiceImpl implements ChatService {
 					String unreadLine = (String) valueSerializer.deserialize((byte[]) arr[i]);
 					key = "myUnreadLine:"+roomKey+":"+username;
 					connection.zRem(keySerializer.serialize(key), valueSerializer.serialize(unreadLine));
-					// System.out.println("나의 미확인 건수 삭제 key: " + key+", unreadLine : "+unreadLine);
 					
 					// 해당 라인의 미확인 사용자 중 나 삭제
 					key = "unreadLineUsers:"+roomKey+":"+unreadLine;
@@ -523,9 +516,6 @@ public class ChatServiceImpl implements ChatService {
 		String type = chatLineEventVO.getType();
 		String roomKey = chatLineEventVO.getRoomKey();
 		String lineKey = chatLineEventVO.getLineKey();
-//		System.out.println("type : " + type);
-//		System.out.println("roomKey : " + roomKey);
-//		System.out.println("lineKey : " + lineKey);
 		
 		JSONObject json = new JSONObject();
 		redisTemplate.execute(new RedisCallback<Object>() {
@@ -539,12 +529,10 @@ public class ChatServiceImpl implements ChatService {
 				if(saddresult == 0) {
 					// 취소가 되어야함.
 					long cancelCnt = connection.sRem(keySerializer.serialize(key), valueSerializer.serialize(username));
-					//System.out.println("취소 ! " + cancelCnt);
 				}
 				// 해당 방의 라인의 타입의 건수
 				long cnt = connection.sCard(keySerializer.serialize(key));
 				
-				//System.out.println(key+" 의 총 건수 : "+cnt);
 				key = "allChatEvent:"+roomKey+":"+lineKey;
 				result = connection.hSet(hashKeySerializer.serialize(key), hashKeySerializer.serialize(type),hashValueSerializer.serialize(String.valueOf(cnt)));
 
@@ -638,7 +626,6 @@ public class ChatServiceImpl implements ChatService {
 		
 		if(sender != null) {
 			list = earlyUserRepository.findBySender(sender);
-			System.out.println("chatService Impl list : "+list);
 		}
 		
 		return list;

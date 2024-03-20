@@ -33,9 +33,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class UserChatController {
 
 	@Autowired
@@ -69,7 +71,6 @@ public class UserChatController {
 			resultMap.put("flag", "fail");
 			resultMap.put("error_code", response.getHeader("error_code"));
 		}else {
-			//System.out.println(chatroom);
 			String result = chatService.putChatRoom(chatroom);
 			
 			if(result != null && result.equals("success")) {
@@ -97,7 +98,6 @@ public class UserChatController {
 			resultMap.put("error_code", response.getHeader("error_code"));
 		}else {
 			if(sender != null) {
-				System.out.println("userchatController sender : " +sender);
 				List<EarlyUser> EarlyUserList = chatService.getChatRoomUserList(sender);
 				
 				ObjectMapper mapper = new ObjectMapper();
@@ -116,7 +116,7 @@ public class UserChatController {
 				
 				resultMap.put("userList", list.toString());
 			}else {
-				System.out.println("getCreateChatRoomUsers sender is null !");
+				log.info("[/user/getCreateChatRoomUsers] getCreateChatRoomUsers sender is null !");
 				resultMap.put("result", "error");
 				return resultMap;
 			}
@@ -165,7 +165,7 @@ public class UserChatController {
 					resultMap.put("result", list.toString());
 					
 				}else {
-					System.out.println("getChatRoomUsers roomkey is null !");
+					log.info("[/user/getChatRoomUsers] getChatRoomUsers roomkey is null !");
 					resultMap.put("result", "error");
 					return resultMap;
 				}
@@ -240,7 +240,6 @@ public class UserChatController {
 					
 					// 웹소켓으로 pub
 					String dest = "/topic/room/"+chatLineEventVO.getRoomKey();
-					//System.out.println(resultJson.toString());
 					simpMessagingTemplate.convertAndSend(dest, resultJson.toJSONString());
 					
 				}
@@ -318,6 +317,7 @@ public class UserChatController {
 	// 채팅방 리스트 조회 
 	@PostMapping("/user/chatList")
 	public Map<String, String> chatList(HttpServletRequest request, HttpServletResponse response, @RequestBody EarlyUser earlyUser){
+		log.info("[/user/chatList] user info : {}", earlyUser);
 		Map<String, String> resultMap = new HashMap<String, String>();
 		
 		String error = (String) response.getHeader("error_code");
@@ -357,7 +357,7 @@ public class UserChatController {
 					resultMap.put("chat_list", "C404");
 				}
 			}else {
-				System.out.println("chatlist 조회시 토큰 id와 넘긴 id가 일치 하지 않음");
+				log.info("[/user/chatList] token id and request id do not match ! token id : {}, request id : {}", username, earlyUser.getUsername() );	
 				resultMap.put("chat_list", "C403");
 			}
 		}
@@ -377,7 +377,7 @@ public class UserChatController {
 		if(main == null 
 		   || StringUtils.isEmpty(main.getChatReceiver()) || StringUtils.isEmpty(main.getChatRoomKey()) || StringUtils.isEmpty(main.getChatSender())
 		   || StringUtils.isEmpty(main.getChatLineKey())) {
-			System.out.println("[UserChatController] send data check !");
+			log.info("[/user/chat] check ChatMain : {}", main);
 			return;
 		}
 		
@@ -422,8 +422,6 @@ public class UserChatController {
 		/* redis 수신자 별 라인 저장 -> 수신자의 채팅방 미확인 건수 저장 -> 수신자의 전체 채팅 미확인 건수 저장 및 전체 건수 조회*/ 
 		Map<String, JSONObject> unreadMap = chatService.getUnreadChatCount(roomKey, receiver, sender, lineKey);
 		
-		//System.out.println(unreadMap);
-		
 		// 발송 - 채팅방의 수신자의 채팅 미확인 전체 건수 & 해당 채팅방의 건수
 		Iterator<String> unreadIter = unreadMap.keySet().iterator();
 		while(unreadIter.hasNext()) {
@@ -446,7 +444,6 @@ public class UserChatController {
 		//for(int i = 0; i< recvIds.length; i++) {
 
 		
-//			System.out.println(roomKey);
 //			String dest = "/topic/room/"+roomKey;
 //
 //			simpMessagingTemplate.convertAndSend(dest, chatData.toJSONString());
@@ -479,7 +476,7 @@ public class UserChatController {
 				
 				String chatRoomKey = chatRoom.getChatRoomKey();
 				
-				System.out.println(username + " : " + chatRoomKey);
+				log.info("[/user/chatRoomLine] user id : {}, room key : {}", username, chatRoomKey);
 				
 				if(!StringUtils.isEmpty(chatRoomKey)) { 
 					
@@ -510,7 +507,6 @@ public class UserChatController {
 					
 					/* 라인 리스트 조회 */
 					List<ChatMain> lineList = chatService.getChatRoomLine(chatRoomKey);
-					System.out.println(lineList);
 					if(lineList != null && !lineList.isEmpty()) {
 						ObjectMapper mapper = new ObjectMapper();
 						

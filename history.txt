@@ -267,3 +267,7 @@
 		- 클라이언트는 채팅 발송 이후 리스트 정보를 갱신하기 위해 다시 리스트를 조회한다. 이때 리스트 정렬 기준이 되는 last_line_key를
 		  /user/chat에서 update하는데 update하는 시점 보다 클라이언트에서 조회하는 시점이 더 빠른 케이스가 있으므로 이에 대응하기 위해 
 		  line 저장 - room 업데이트 순서를 room 업데이트 - line 저장 순서대로 수정하였다.
+		  
+2024.03.20
+	1. sl4fj를 이용한 로깅 
+		- 기존 system.out.println로그 -> slf4j 인터페이스를 이용한 logback 라이브러리 사용 로깅으로 수정 (logback-spring.xml 참조)		  

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+	<property name="CONSOLE_LOG_PATTERN" value="[%d{yyyy-MM-dd HH:mm:ss.SSS}] %highlight(%5level) %logger - %msg%n"/>
+	<property name="FILE_LOG_PATTERN" value="[%d{yyyy-MM-dd HH:mm:ss.SSS}] %5level %logger - %msg%n"/>
+	<property name="WS_FILE_LOG_PATTERN" value="[%d{yyyy-MM-dd HH:mm:ss.SSS}] %5level %logger - %msg%n"/>
+
+	<appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>${CONSOLE_LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+	<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<encoder>
+			<pattern>${FILE_LOG_PATTERN}</pattern>		
+		</encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<fileNamePattern>./log/%d{yyyy-MM-dd}.log.%i</fileNamePattern>
+			<maxFileSize>20MB</maxFileSize>
+			<maxHistory>31</maxHistory>
+		</rollingPolicy>
+	</appender>
+	
+	<appender name="WebSocket-FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<encoder>
+			<pattern>${WS_FILE_LOG_PATTERN}</pattern>		
+		</encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+			<fileNamePattern>./ws_log/%d{yyyy-MM-dd}.log.%i</fileNamePattern>
+			<maxFileSize>20MB</maxFileSize>
+			<maxHistory>31</maxHistory>
+		</rollingPolicy>
+	</appender>
+	
+	<root level="INFO">
+		<appender-ref ref="CONSOLE"/>
+		<appender-ref ref="FILE"/>
+	</root>	
+	<logger name="WebSocketLogger" level="INFO">
+		<appender-ref ref="WebSocket-FILE"/>
+	</logger>
+</configuration>

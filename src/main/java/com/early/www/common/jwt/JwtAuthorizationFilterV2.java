@@ -24,6 +24,8 @@ import com.early.www.user.model.EarlyUser;
 import com.early.www.user.model.RefreshToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.slf4j.Slf4j;
+
 // 20240120
 // 기존에 있는 JwtAuthorizationFilter는 토큰 인증 방법이 아래와 같다.
 // 서버로 요청하는 로그인을 제외한 url을 request할때 access token을 넘기고
@@ -45,7 +47,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 	 * 403 there isn't access token, refresh token 
 	 * 
 	 * */
-
+@Slf4j
 public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 
 	
@@ -63,10 +65,8 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
 			throws IOException, ServletException {
 		
-		//System.out.println("[JwtAuthorizationFilterV2] 인증이나 권한이 필요한 주소 요청 !");
 		
 		String requestUrl = request.getRequestURI();
-		System.out.println("[JwtAuthorizationFilterV2] requestUrl : "+ requestUrl);
 		
 		String jwtHeader = null; 
 		String username = null;
@@ -77,9 +77,9 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 			// accessToken
 			jwtHeader = request.getHeader("Authorization");
 		
-			System.out.println("넘겨받은 access token : " + jwtHeader);
 			// 유효성 검사
 			if(jwtHeader == null || !jwtHeader.startsWith("Bearer")) {
+				log.info("[{}] Authorization data is invalid ! : {}",requestUrl, jwtHeader);
 				response.addHeader("error_code", "403");
 				chain.doFilter(request, response);
 				return;
@@ -95,7 +95,7 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 				 
 			}catch(TokenExpiredException e) {
 				// access token 만료 -> 무조건 로그아웃 처리 
-				System.out.println("여기 호출시 error code 400");
+				log.info("[{}] TokenExpiredException !", requestUrl);
 				response.addHeader("error_code", "400");
 				chain.doFilter(request, response);
 				return;
@@ -111,6 +111,7 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 					EarlyUser userEntity = commonRepository.findByusername(username);
 					// userEntity 가 null 인경우 
 					if(userEntity == null) {
+						log.info("[{}] userEntity is null", requestUrl);
 						response.addHeader("error_code", "403");
 						chain.doFilter(request, response);
 						return;
@@ -139,7 +140,7 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 											nowDate = JWT.require(Algorithm.HMAC512("early")).build().verify(refreshToken).getClaim("nowDate").asString();
 										}catch(TokenExpiredException e2) {
 											// refresh token 만료 
-											System.out.println("[JwtAuthorizationFilterV2] refresh token 만료 ! 로그아웃 처리");
+											log.info("[/user/accessToken] refresh token expired ! logout. user id : {}", username);
 											response.addHeader("error_code", "401");
 											chain.doFilter(request, response);
 											return;
@@ -152,8 +153,6 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 
 												String newAccessToken = createAccessToken(savedToken);
 												response.addHeader("Authorization", "Bearer "+newAccessToken); //Bearer 한칸 띄고 jwtToken
-												// System.out.println("[JwtAuthorizationFilterV2] token 재발급 성공 , newAccessToken : "+ newAccessToken);
-												// chain.doFilter(request, response);
 											}
 										}	
 									}
@@ -161,15 +160,13 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 							}
 							
 						}catch(NullPointerException e2) {
-							System.out.println("[JwtAuthorizationFilterV2] cookies 없음 -> 로그아웃 처리 ");
+							log.info("[/user/accessToken] cookies is null ! logout. user id : {}", username);
 							response.addHeader("error_code", "401");
-							// 다시 로그인 하는 error_code 주기 
 							chain.doFilter(request, response);
 							return;
 						}
 						if(!tokenFlag) {
-							// 다시 로그인 하는 error_code 주기 
-							System.out.println(" [JwtAuthorizationFilterV2] Cookie에 refreshToken 없음 -> 로그아웃 처리");
+							log.info("[/user/accessToken] refreshToken is null ! logout. user id : {}", username);
 							response.addHeader("error_code", "401");
 							chain.doFilter(request, response);
 						}
@@ -183,21 +180,18 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 			
 		}else if(SecurityContextHolder.getContext().getAuthentication() != null && request.getRequestURI().equals("/login")) {
 			// 20231230 기준 SecurityContextHolder.getContext().setAuthentication 하는 로직은 로그인 성공시 뿐이다.
-			System.out.println("[JwtAuthorizationFilter] 로그인 요청 ");		
-			
 			// redis에서 미확인 건수 조회용 -> AuthentificationFilter에서 setAuthentication 에서 사용자 객체의 username 뽑기.
 			// 사용자 id를 가져오려면 AuthentificationFilter에서 cookie에 접근 해야됨(request나 response 영역에 set)
 			// 그것보다는 필터간 공유 영역인  SecurityContextHolder 영역에 접근하여 데이터를 가져오도록 처리함. 
 			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 			PrincipalDetails user = (PrincipalDetails) authentication.getPrincipal();
 			username = user.getEarlyUser().getUsername();
-			System.out.println("SecurityContextHolder : " + username);
+			log.info("[/login] user id : {} ", username);	
 			request.setAttribute("username", username);
 		}else {
-			System.out.println("[JwtAuthorizationFilterV2] access token 없음");
+			log.info("[{}] access token is invalid ! ", request.getRequestURI());
 			response.addHeader("error_code", "403");
 		}
-		
 		
 		chain.doFilter(request, response);
 	}

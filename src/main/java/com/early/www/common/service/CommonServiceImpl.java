@@ -26,7 +26,6 @@ public class CommonServiceImpl implements CommonService {
 	@Override
 	public String userJoin(EarlyUser user) {
 		String result = "fail";
-		System.out.println("CommonServiceImpl 회원가입 요청 ! 사용자 정보 : "+user);
 		EarlyUser earlyUser = null;
 		// 회원가입 여부 체크 = 동일한 사용자 
 		EarlyUser joinCheck = commonRepository.findByusername(user.getUsername());
@@ -65,8 +64,6 @@ public class CommonServiceImpl implements CommonService {
 		
 		EarlyUser earlyUser = commonRepository.findByusername(username);
 		
-		System.out.println(earlyUser);
-		
 		if(earlyUser != null ) {
 			if(passwordEncoder.matches(password, earlyUser.getPassword())) {
 				return true; // 입력한 비밀번호와 저장소의 비밀번호가 일치
@@ -80,26 +77,14 @@ public class CommonServiceImpl implements CommonService {
 	
 	@Override
 	public void testRedisSet(String data) {
-
-		System.out.println("1 Commonservice testRedisSet data : " + data);
-		
 		long result = redisTemplate.opsForSet().add("test@naver.com|roomkey1", data);
-		
-		System.out.println("2 Commonservice testRedisSet data : " + data + ", result : " + result);
-		
 		long unreadCnt = redisTemplate.opsForSet().size("test@naver.com|roomkey1");
-		
-		System.out.println("3 Commonservice testRedisSet data : " + data + ", unreadCnt : " + unreadCnt);
-		
-	
 		
 	}
 
 	@Override
 	public void testRedisGet(String data) {
 
-		System.out.println("Commonservice testRedisGet data : " + data);
-		
 		Set<Object> values = redisTemplate.opsForSet().members("bse3808@gmail.com|R_231212225204942");		
 
 		for(int i = 0 ; i < values.size(); i++) {
@@ -109,7 +94,6 @@ public class CommonServiceImpl implements CommonService {
 		
 		long result = redisTemplate.opsForSet().size("bse3808@gmail.com|R_231212225204942");		
 		
-		System.out.println("Commonservice testRedisGet result : " + result);
 	}
 
 

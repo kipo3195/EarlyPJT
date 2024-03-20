@@ -24,7 +24,10 @@ import com.early.www.user.model.EarlyUser;
 import com.early.www.user.model.RefreshToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.slf4j.Slf4j;
+
 // This filter by default responds to the URL /login.
+@Slf4j
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 	
 	AuthenticationManager authenticationManager;
@@ -40,8 +43,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 		public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
 				throws AuthenticationException {
 			
-			System.out.println("[JwtAuthenticationFilter] 로그인 시도 요청");
-			
 			// 1.username, password 받기
 			try {
 //				BufferedReader br = request.getReader();
@@ -50,15 +51,13 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 //				String input = null;
 //				
 //				while((input = br.readLine()) != null) {
-//					System.out.println(input);
 //				}
 			
 				//json 형태로 파싱함
 				ObjectMapper om = new ObjectMapper();
-				System.out.println(om);
 				EarlyUser earlyUser = om.readValue(request.getInputStream(), EarlyUser.class);
 				
-				
+				log.info("[/login] login request user id : {}", earlyUser.getUsername());
 				// 토큰생성 
 				UsernamePasswordAuthenticationToken authenticationToken 
 						= new UsernamePasswordAuthenticationToken(earlyUser.getUsername(), earlyUser.getPassword());
@@ -69,14 +68,12 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 				// 계정 정보가 존재하지 않는다면 여기서 throws exception 
 				
 				if(authentication == null) {
-					System.out.println("[JwtAuthenticationFilter] 일치하는 정보가 없습니다. ");
+					log.info("[/login] There are no matching users : {}", earlyUser.getUsername());
 				}else {
 					// authentication에는 principalDetails (사용자 정보 객체), Credentials, Authenticated(T/F), Granted Authorities 정보 등이 담겨있음.
-					// System.out.println("[JwtAuthenticationFilter] authentication : " +authentication);
 					
 					// 로그인된 사용자의 계정명을 출력하는 로그 
 					// PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
-					// System.out.println("[JwtAuthenticationFilter] username : " + principalDetails.getEarlyUser().getUsername());
 					
 					return authentication;
 				}
@@ -89,7 +86,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 		@Override
 		protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
 				Authentication authResult) throws IOException, ServletException {
-			System.out.println("[JwtAuthenticationFilter] successfulAuthentication 인증완료 ");
 			
 			PrincipalDetails principalDetails = (PrincipalDetails) authResult.getPrincipal();
 			
@@ -142,8 +138,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 		protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
 				AuthenticationException failed ) throws IOException, ServletException {
 			super.unsuccessfulAuthentication(request, response, failed);
-			System.out.println("[JwtAuthenticationFilter] unsuccessfulAuthentication 계정 정보 존재하지 않음 ");
-			
+			// 일치하는 사용자 없을때 
 //			response.setStatus(HttpStatus.UNAUTHORIZED.value());
 //	        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 //
