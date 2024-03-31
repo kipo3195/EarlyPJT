@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.early</groupId>
 	<artifactId>early</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.01</version>
 	<name>early</name>
 	<description>early project</description>
 	<packaging>jar</packaging>  <!-- 20240317 배포방식 지정 -->
@@ -102,6 +102,13 @@
 		<dependency>    
 		    <groupId>org.springframework.boot</groupId>
 		    <artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+		
+		<!-- https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-oauth2-client -->
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-oauth2-client</artifactId>
+		    <version>3.2.0</version>
 		</dependency>
 	</dependencies>
 

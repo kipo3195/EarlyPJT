@@ -72,6 +72,12 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 		String username = null;
 		
 		// 토큰 검증이든 비즈니스 로직이든 accessToken은 체크해야함. 
+		if(request.getHeader("Google") != null) {
+			System.out.println("여기 !!!!");
+			
+			chain.doFilter(request, response);
+			return;
+		}
 		
 		if(request.getHeader("Authorization") != null) {
 			// accessToken

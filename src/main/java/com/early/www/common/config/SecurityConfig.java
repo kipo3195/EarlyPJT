@@ -31,6 +31,7 @@ public class SecurityConfig {
 	
 	private final AuthenticationConfiguration authenticationConfiguration;
 	
+	
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
@@ -45,7 +46,7 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception{
 		
-		// csrf를 사용하게 되면 
+//		// csrf를 사용하게 되면 
 		http.csrf().disable();
 		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 		.and()
@@ -58,6 +59,8 @@ public class SecurityConfig {
 		.authorizeRequests()	// 다음 리퀘스트에 대한 사용자 권한 체크
 		//.antMatchers("/user/**").hasRole("USER") //role 기반이 아닌 url - jwt 기반으로 처리
 		.anyRequest().permitAll(); // 다른 요청은 권한 없이 들어갈 수 있도록 처리함
+
+
 		
 		return http.build();
 	}

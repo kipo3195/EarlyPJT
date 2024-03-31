@@ -47,4 +47,11 @@ public class EarlyUser {
 		return new ArrayList<>();
 	}
 	
+	//OAuth2.0 추가 
+	@Column(name="provider")
+	private String provider;
+	
+	@Column(name="providerId")
+	private String providerId;
+	
 }

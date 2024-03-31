@@ -270,4 +270,7 @@
 		  
 2024.03.20
 	1. sl4fj를 이용한 로깅 
-		- 기존 system.out.println로그 -> slf4j 인터페이스를 이용한 logback 라이브러리 사용 로깅으로 수정 (logback-spring.xml 참조)	  
+		- 기존 system.out.println로그 -> slf4j 인터페이스를 이용한 logback 라이브러리 사용 로깅으로 수정 (logback-spring.xml 참조)	
+		
+2024.03.31
+	1. google OAuth2.0 로그인 작업중   

@@ -30,8 +30,16 @@ spring:
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     show-sql: false
-    
   
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 917660405716-5mdk8ab542luosidsriaijp46e5d174f.apps.googleusercontent.com
+            client-secret: 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
+            redirect-uri: http://localhost:8080/login/oauth2/code/google
+
 
     
     
