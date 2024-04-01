@@ -10,8 +10,11 @@ import org.springframework.stereotype.Service;
 import com.early.www.repository.CommonRepository;
 import com.early.www.user.model.EarlyUser;
 
+import lombok.extern.slf4j.Slf4j;
+
 
 @Service
+@Slf4j
 public class CommonServiceImpl implements CommonService {
 
 	@Autowired
@@ -22,6 +25,29 @@ public class CommonServiceImpl implements CommonService {
 	
 	@Autowired
 	RedisTemplate<String, Object> redisTemplate;
+	
+	@Override
+	public boolean userJoinOAuth(EarlyUser user) {
+		boolean result = false;
+		EarlyUser joinCheck = commonRepository.findByusername(user.getUsername());
+		if(joinCheck != null) {
+			// 이미 가입된 회원 
+			log.info(" {} is already Join user !", user.getUsername());
+			return true;
+		}else {
+			String encodedPw = passwordEncoder.encode(user.getPassword());
+			user.setPassword(encodedPw);
+			user.setRoles("ROLE_USER");
+			
+			EarlyUser earlyUser = commonRepository.save(user);
+			if(earlyUser != null) {
+				log.info(" {} Join success !", user.getUsername());
+				return true;
+			}
+		}
+		
+		return result;
+	}
 	
 	@Override
 	public String userJoin(EarlyUser user) {
@@ -95,6 +121,8 @@ public class CommonServiceImpl implements CommonService {
 		long result = redisTemplate.opsForSet().size("bse3808@gmail.com|R_231212225204942");		
 		
 	}
+
+
 
 
 }

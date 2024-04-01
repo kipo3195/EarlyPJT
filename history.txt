@@ -274,3 +274,8 @@
 		
 2024.03.31
 	1. google OAuth2.0 로그인 작업중   
+	
+2024.04.02
+	1. resource server 호출 로직 추가
+	2. 로그인 처리를 위한 accessToken, refreshToken 발급 추가
+	3. google OAuth2.0 클라이언트별 분기처리 추가 	
