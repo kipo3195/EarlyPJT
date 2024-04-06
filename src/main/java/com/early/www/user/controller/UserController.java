@@ -102,6 +102,7 @@ public class UserController {
 			resultMap.put("flag", "success");
 			resultMap.put("token", response.getHeader("Authorization"));
 			resultMap.put("chat", allUnreadMap.get("chat"));
+			
 			//resultMap.put("msg", allUnreadMap.get("msg"));
 		}else {
 			resultMap.put("flag", "fail");

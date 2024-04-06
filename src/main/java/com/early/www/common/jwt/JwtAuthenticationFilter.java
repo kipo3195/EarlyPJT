@@ -9,6 +9,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,9 +18,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.stereotype.Component;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.early.www.repository.TokenRepository;
 import com.early.www.user.model.EarlyUser;
 import com.early.www.user.model.RefreshToken;
@@ -30,7 +34,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 	
+	
 	AuthenticationManager authenticationManager;
+	
 	private TokenRepository tokenRepository;
 	
 	public JwtAuthenticationFilter(AuthenticationManager authenticationManager, TokenRepository tokenRepository) {
@@ -57,7 +63,33 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 				ObjectMapper om = new ObjectMapper();
 				EarlyUser earlyUser = om.readValue(request.getInputStream(), EarlyUser.class);
 				
-				log.info("[/login] login request user id : {}", earlyUser.getUsername());
+				log.info("[/login] login request user id : {}, login provider : {}", earlyUser.getUsername(), earlyUser.getProvider());
+
+				
+				// OAuth 로그인 계정 
+				if(!earlyUser.getProvider().toLowerCase().equals("default")) {
+					
+					try {
+						
+						String tempPw = JWT.require(Algorithm.HMAC512("early")).build().verify(earlyUser.getPassword()).getClaim("tempPw").asString();
+					
+						if(tempPw != null) {
+							earlyUser.setPassword(earlyUser.getUsername()+"early");
+							
+						} else {
+							log.info("[/user/accessToken] OAuth login tempPw is null ! user id : {}", earlyUser.getUsername());
+							response.addHeader("error_code", "401");
+							return null;
+						}
+
+					}catch(TokenExpiredException e2) {
+						// refresh token 만료 
+						log.info("[/user/accessToken] OAuth login tempPw expired ! user id : {}", earlyUser.getUsername());
+						response.addHeader("error_code", "401");
+						return null;
+					}
+				}
+				
 				// 토큰생성 
 				UsernamePasswordAuthenticationToken authenticationToken 
 						= new UsernamePasswordAuthenticationToken(earlyUser.getUsername(), earlyUser.getPassword());

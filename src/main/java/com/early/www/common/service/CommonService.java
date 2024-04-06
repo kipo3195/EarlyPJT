@@ -8,7 +8,7 @@ public interface CommonService {
 	public abstract String userJoin(EarlyUser user);
 	
 	// OAuth2.0 회원가입 
-	public abstract boolean userJoinOAuth(EarlyUser user);
+	public abstract boolean userJoinOAuth(String userId, String name, String socialLoginType);
 	
 	// id 중복체크 
 	public abstract boolean existsUsername(String userId);

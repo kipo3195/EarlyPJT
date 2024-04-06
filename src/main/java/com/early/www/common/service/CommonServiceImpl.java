@@ -27,21 +27,28 @@ public class CommonServiceImpl implements CommonService {
 	RedisTemplate<String, Object> redisTemplate;
 	
 	@Override
-	public boolean userJoinOAuth(EarlyUser user) {
+	public boolean userJoinOAuth(String userId, String name, String socialLoginType) {
 		boolean result = false;
-		EarlyUser joinCheck = commonRepository.findByusername(user.getUsername());
+		EarlyUser joinCheck = commonRepository.findByusername(userId);
 		if(joinCheck != null) {
 			// 이미 가입된 회원 
-			log.info(" {} is already Join user !", user.getUsername());
+			log.info(" {} is already Join user !", userId);
 			return true;
+			
 		}else {
-			String encodedPw = passwordEncoder.encode(user.getPassword());
-			user.setPassword(encodedPw);
+			
+			EarlyUser user = new EarlyUser();
+			
+			user.setUsername(userId);
+			user.setPassword(passwordEncoder.encode(userId+"early"));
+			user.setName(name);
+			user.setProvider(socialLoginType);
 			user.setRoles("ROLE_USER");
 			
 			EarlyUser earlyUser = commonRepository.save(user);
+			
 			if(earlyUser != null) {
-				log.info(" {} Join success !", user.getUsername());
+				log.info(" {} Join success !", userId);
 				return true;
 			}
 		}
