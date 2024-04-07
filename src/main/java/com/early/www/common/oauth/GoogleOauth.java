@@ -26,6 +26,7 @@ import org.springframework.web.client.RestTemplate;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.early.www.common.service.CommonService;
+import com.early.www.properties.OAuthProperties;
 import com.early.www.user.model.EarlyUser;
 
 import lombok.extern.slf4j.Slf4j;
@@ -41,19 +42,22 @@ public class GoogleOauth implements SocialOauth {
 	@Autowired
 	RedisTemplate<String, Object> redisTemplate;
 	
+	@Autowired
+	OAuthProperties oAuthProperties;
+	
 	@Override
 	public String getOauthRedirectURL(String clientType) {
 		Map<String, Object> params = new HashMap<>();
         params.put("scope", "profile");
         params.put("response_type", "code");
-        params.put("client_id", "917660405716-5mdk8ab542luosidsriaijp46e5d174f.apps.googleusercontent.com");
-        params.put("redirect_uri", "http://localhost:8080/auth/google/callback/"+clientType);
+        params.put("client_id", oAuthProperties.getClientId());
+        params.put("redirect_uri", oAuthProperties.getRedirectUrl()+clientType);
 
         String parameterString = params.entrySet().stream()
                 .map(x -> x.getKey() + "=" + x.getValue())
                 .collect(Collectors.joining("&"));
 
-        return "https://accounts.google.com/o/oauth2/v2/auth" + "?" + parameterString;
+        return oAuthProperties.getGoogleLoginUrl() + "?" + parameterString;
 	}
 
 	@Override
@@ -63,13 +67,13 @@ public class GoogleOauth implements SocialOauth {
 
         Map<String, Object> params = new HashMap<>();
         params.put("code", code);
-        params.put("client_id", "917660405716-5mdk8ab542luosidsriaijp46e5d174f.apps.googleusercontent.com");
-        params.put("client_secret", "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");
-        params.put("redirect_uri", "http://localhost:8080/auth/google/callback/"+clientType);
+        params.put("client_id", oAuthProperties.getClientId());
+        params.put("client_secret", oAuthProperties.getClientSecret());
+        params.put("redirect_uri", oAuthProperties.getRedirectUrl()+clientType);
         params.put("grant_type", "authorization_code");
 
         ResponseEntity<String> responseEntity =
-                restTemplate.postForEntity("https://oauth2.googleapis.com/token", params, String.class);
+                restTemplate.postForEntity(oAuthProperties.getTokenUrl(), params, String.class);
 
         if (responseEntity.getStatusCode() == HttpStatus.OK) {
             return responseEntity.getBody();
@@ -157,6 +161,12 @@ public class GoogleOauth implements SocialOauth {
 			switch(clientType) {
 			
 			case "web":
+				try {
+					response.sendRedirect("http://localhost:3000/auth/google/error");
+					log.info("userId : {} Google OAuth redirect error ! ", userId);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 				break;
 			case "ios":
 				break;

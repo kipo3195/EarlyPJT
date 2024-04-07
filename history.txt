@@ -285,3 +285,7 @@
 	2. redirect 이후 /login 요청시 provider값에 따른 분기처리 (기본 login은 default, 구글은 google)
 		- provider가 default가 아닌 경우(OAuth) 토큰 체크 로직 추가 
 		- 토큰의 데이터가 요청한 사용자의 ID와 동일한 경우에 로그인 처리, 다를 경우 error 	
+		
+2024.04.07
+	1. 방생성 및 참여자 조회시 사용자 조회 컬럼에 '' as provider, '' as providerId 추가
+	2. serverConfig.yml 추가 - @Configuration, @ConfigurationProperties를 활용한 OAuth2 설정 파일 객체 추가 (정리 내용은 노션 참조) 		

@@ -1,0 +1,19 @@
+test:
+  stringConfig: serverConfig this is string
+  intConfig : 1234
+  listConfig[0]: serverConfig this is list index 0
+  listConfig[1]: serverConfig this is list index 1
+  mapConfig: 
+    key1: serverConfig this is mapConfig value 1
+    key2: serverConfig this is mapConfig value 2 
+    
+    
+google-oauth:
+  clientId: 917660405716-5mdk8ab542luosidsriaijp46e5d174f.apps.googleusercontent.com
+  clientSecret: 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
+  googleLoginUrl: https://accounts.google.com/o/oauth2/v2/auth
+  redirectUrl: http://localhost:8080/auth/google/callback/
+  tokenUrl: https://oauth2.googleapis.com/token
+  userInfoUrl: https://www.googleapis.com/oauth2/v2/userinfo
+  redirectEndUrl: http://localhost:3000/auth/google/callback
+  
