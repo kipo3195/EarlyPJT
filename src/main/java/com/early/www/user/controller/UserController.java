@@ -87,109 +87,36 @@ public class UserController {
 	}
 	
 	
-	// 로그인 요청 API
-	@PostMapping("/login")
-	@ResponseBody
-	public Map<String, String> loginRequest(String username, String password, String token, HttpServletResponse response, HttpServletRequest request) {
-		
-		Map<String, String> resultMap = new HashMap<String, String>();
-		
-		if(response.getHeader("Authorization") != null) {
-			username = (String) request.getAttribute("username");
-			// 채팅, 쪽지의 미확인 건수 조회 
-			Map<String, String> allUnreadMap = chatService.getAllUnreadCnt(username);
-			
-			resultMap.put("flag", "success");
-			resultMap.put("token", response.getHeader("Authorization"));
-			resultMap.put("chat", allUnreadMap.get("chat"));
-			
-			//resultMap.put("msg", allUnreadMap.get("msg"));
-		}else {
-			resultMap.put("flag", "fail");
-			
-		}
-		return resultMap;
-		
-	}
-	
-	
-	// 회원가입 전 ID 중복 체크 API
-	@GetMapping("/idDupCheck")
-	@ResponseBody
-	public Map<String, String> idDupCheck(@RequestParam String username) {
-		
-		log.info("[/idDupCheck] check user id : {}", username);
-		
-		boolean result = service.existsUsername(username);
-
-		
-		Map<String, String> resultMap = new HashMap<>();
-		
-		if(result) {
-			// 중복
-			resultMap.put("result", "true");
-		}else {
-			resultMap.put("result", "false");
-		}
-		
-		log.info("[/idDupCheck] check user id : {} : result : {}", username, result ? "already exists":"available");
-		return resultMap;
-	}
-	
-	// 회원가입 요청 API
-	// react 버전 axios를 통한 통신으로 데이터 전송시 json 형태로 들어오기 때문에 @RequestBody 어노테이션 필요함.
-	@PostMapping("/join")
-	public Map<String, String> joinRequest(@RequestBody EarlyUser user) {
-		
-		
-		Map<String, String> resultMap = new HashMap<String, String>();
-		
-		String result = service.userJoin(user);
-		if(result.equals("success")) {
-			resultMap.put("flag", "success");
-		}else {
-			resultMap.put("flag", "fail");
-		}
-		
-		log.info("[/join] user id : {} result : {}", user.getUsername(), result.equals("success") ? "success":"fail");
-		return resultMap;
-	}
-	
-	
-	
-	
-	
-	
 	
 	// 리액트 사용안함. 20231203
-	@GetMapping("/user/main")
-	public Map<String, String> userMainRequest(HttpServletResponse response) {
-		
-		Map<String, String> resultMap = new HashMap<String, String>();
-		
-		if(response.getHeader("error_code") != null) {
-			resultMap.put("result_code", response.getHeader("error_code"));
-		}else {
-			resultMap.put("success", "200");
-		}
-		
-		return resultMap;
-	}
+//	@GetMapping("/user/main")
+//	public Map<String, String> userMainRequest(HttpServletResponse response) {
+//		
+//		Map<String, String> resultMap = new HashMap<String, String>();
+//		
+//		if(response.getHeader("error_code") != null) {
+//			resultMap.put("result_code", response.getHeader("error_code"));
+//		}else {
+//			resultMap.put("success", "200");
+//		}
+//		
+//		return resultMap;
+//	}
 	
 	// 리액트 사용안함. 20231203 
-	@GetMapping("/user/logout")
-	public Map<String, String> userLogoutRequest(HttpServletResponse response) {
-		
-		Map<String, String> resultMap = new HashMap<String, String>();
-		
-		if(response.getHeader("error_code") != null) {
-			resultMap.put("result_code", response.getHeader("error_code"));
-		}else {
-			resultMap.put("success", "200");
-		}
-		
-		return resultMap;
-	}
+//	@GetMapping("/user/logout")
+//	public Map<String, String> userLogoutRequest(HttpServletResponse response) {
+//		
+//		Map<String, String> resultMap = new HashMap<String, String>();
+//		
+//		if(response.getHeader("error_code") != null) {
+//			resultMap.put("result_code", response.getHeader("error_code"));
+//		}else {
+//			resultMap.put("success", "200");
+//		}
+//		
+//		return resultMap;
+//	}
 
 	
 }

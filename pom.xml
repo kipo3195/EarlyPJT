@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.early</groupId>
 	<artifactId>early</artifactId>
-	<version>1.01</version>
+	<version>1.02</version>
 	<name>early</name>
 	<description>early project</description>
 	<packaging>jar</packaging>  <!-- 20240317 배포방식 지정 -->

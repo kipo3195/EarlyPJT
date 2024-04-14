@@ -1,6 +1,7 @@
 package com.early.www.common.config;
 
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -10,8 +11,13 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import com.early.www.properties.RedisProperties;
+
 @Configuration
 public class RedisConfig {
+	
+	@Autowired
+	RedisProperties redisProperties;
 	
     @Bean
     public RedisSerializer<Object> springSessionDefaultRedisSerializer() {
@@ -22,6 +28,7 @@ public class RedisConfig {
 	@Bean
 	public RedisConnectionFactory redisConnectionFactory() {
 		LettuceConnectionFactory lettuceConnectionFactory = new LettuceConnectionFactory();
+		lettuceConnectionFactory.setPassword(redisProperties.getRedisPassword());
 		return lettuceConnectionFactory;
 	}
 	

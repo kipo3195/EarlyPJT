@@ -3,6 +3,7 @@ package com.early.www.common.jwt;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
@@ -24,10 +25,8 @@ public class CorsConfig {
 		// 'http://localhost:3000' has been blocked by CORS policy: Response to preflight 
 		//request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.
 		// registerCorsConfiguration에 해당하는 경로에 대해서만 접근 허용으로 보여서 기존 /user/**에서 수정함.  
-
 		
 		return new CorsFilter(source);
-		
 	}
 	
 	

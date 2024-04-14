@@ -44,18 +44,18 @@ public class StompConfig implements WebSocketMessageBrokerConfigurer{
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
     	// websocket(또는 sockJS) 클라이언트가 연결을 하기위한 handshake용 url.
-        registry.addEndpoint("/earlyShake")
+        registry.addEndpoint("/earlyShake").setAllowedOriginPatterns("*")
         		.withSockJS()
         		.setStreamBytesLimit(512 * 1024) //512KB
         		.setHttpMessageCacheSize(1000)
         		.setDisconnectDelay(1000);
+        	
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.setApplicationDestinationPrefixes("/app");
         config.enableSimpleBroker("/topic", "/queue");
-        
     }
 
 	

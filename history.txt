@@ -289,3 +289,8 @@
 2024.04.07
 	1. 방생성 및 참여자 조회시 사용자 조회 컬럼에 '' as provider, '' as providerId 추가
 	2. serverConfig.yml 추가 - @Configuration, @ConfigurationProperties를 활용한 OAuth2 설정 파일 객체 추가 (정리 내용은 노션 참조) 		
+	
+2024.04.14
+	1. 회원가입, 중복사용자 체크, 로그인 controller 이동
+	2. redis 설정 추가 (비밀번호)
+	3. 웹소켓 Config에 CORS 규칙 추가 *
