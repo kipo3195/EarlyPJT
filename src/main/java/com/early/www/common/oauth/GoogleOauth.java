@@ -140,7 +140,7 @@ public class GoogleOauth implements SocialOauth {
 			
 			case "web":
 				try {
-					response.sendRedirect("http://localhost:3000/auth/google/callback");
+					response.sendRedirect("http://kcoproject.site:3000/auth/google/callback");
 					log.info("userId : {} Google OAuth redirect success ! ", userId);
 					// 현재 getUserInfo에서 생성한 JWT 정보들을 cookie로 전달한다.
 					// react의 Application에서 쿠키를 확인했을때 Path가 /auth/google/callback로 나온다(서버의 마지막 redirect 경로)

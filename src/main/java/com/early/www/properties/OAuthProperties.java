@@ -17,6 +17,5 @@ public class OAuthProperties {
 	private String tokenUrl;
 	private String userInfoUrl;
 	private String googleLoginUrl;
-	private String redirectEndUrl;
 	
 }
