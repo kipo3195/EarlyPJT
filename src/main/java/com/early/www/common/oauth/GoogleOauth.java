@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
 import org.json.simple.JSONObject;
@@ -69,7 +69,7 @@ public class GoogleOauth implements SocialOauth {
         params.put("code", code);
         params.put("client_id", oAuthProperties.getClientId());
         params.put("client_secret", oAuthProperties.getClientSecret());
-        params.put("redirect_uri", oAuthProperties.getRedirectUrl()+clientType);
+        params.put("redirect_uri", oAuthProperties.getRedirectUrl()+clientType); // 클라이언트에 따라 처리함 
         params.put("grant_type", "authorization_code");
 
         ResponseEntity<String> responseEntity =
@@ -107,44 +107,67 @@ public class GoogleOauth implements SocialOauth {
 		
 		if(result) {
 			
-			
 			// 쿠키 저장 flag
-			ResponseCookie flagCookie = ResponseCookie.from("flag", "success")
-					.maxAge(20)			// 20초
-					.httpOnly(false)	// 브라우저에서 쿠키에 접근할 수 있도록 허용
-					.build();
-			response.addHeader("Set-Cookie", flagCookie.toString());
+//			ResponseCookie flagCookie = ResponseCookie.from("flag", "success")
+//					.maxAge(20)			// 20초
+//					.httpOnly(false)	// 브라우저에서 쿠키에 접근할 수 있도록 허용
+//					.build();
+//			response.addHeader("Set-Cookie", flagCookie.toString());
+			
+			Cookie flagCookie = new Cookie("flag", "success");
+			flagCookie.setPath("/");
+			flagCookie.setMaxAge(20);
+			response.addCookie(flagCookie);
 			
 			// 쿠키 저장 id
-			ResponseCookie idCookie = ResponseCookie.from("userId", userId)
-					.maxAge(20)			// 20초
-					.httpOnly(false)	// 브라우저에서 쿠키에 접근할 수 있도록 허용
-					.build();
-			response.addHeader("Set-Cookie", idCookie.toString());
+//			ResponseCookie idCookie = ResponseCookie.from("userId", userId)
+//					.maxAge(20)			// 20초
+//					.httpOnly(false)	// 브라우저에서 쿠키에 접근할 수 있도록 허용
+//					.build();
+//			response.addHeader("Set-Cookie", idCookie.toString());
 			
-			// 쿠키 저장 pw
-			ResponseCookie tempCookie = ResponseCookie.from("temp", createTempToken(userId)) //임시 비밀번호. /login으로 요청시 복호화 함 
-					.maxAge(20)			// 20초
-					.httpOnly(false)	// 브라우저에서 쿠키에 접근할 수 있도록 허용
-					.build();
-			response.addHeader("Set-Cookie", tempCookie.toString());
+			Cookie userIdCookie = new Cookie("userId", userId);
+			userIdCookie.setPath("/");
+			userIdCookie.setMaxAge(20);
+			response.addCookie(userIdCookie);
+			
+//			// 쿠키 저장 pw
+//			ResponseCookie tempCookie = ResponseCookie.from("temp", createTempToken(userId)) //임시 비밀번호. /login으로 요청시 복호화 함 
+//					.maxAge(20)			// 20초
+//					.httpOnly(false)	// 브라우저에서 쿠키에 접근할 수 있도록 허용
+//					.build();
+//			response.addHeader("Set-Cookie", tempCookie.toString());
+			
+			Cookie tempCookie = new Cookie("temp", createTempToken(userId));
+			tempCookie.setPath("/");
+			tempCookie.setMaxAge(20);
+			response.addCookie(tempCookie);
 
 			// 쿠키 저장 provider
-			ResponseCookie providerCookie = ResponseCookie.from("provider", "google")
-					.maxAge(20)			// 20초
-					.httpOnly(false)	// 브라우저에서 쿠키에 접근할 수 있도록 허용
-					.build();
-			response.addHeader("Set-Cookie", providerCookie.toString());
+//			ResponseCookie providerCookie = ResponseCookie.from("provider", "google")
+//					.maxAge(20)			// 20초
+//					.httpOnly(false)	// 브라우저에서 쿠키에 접근할 수 있도록 허용
+//					.build();
+//			response.addHeader("Set-Cookie", providerCookie.toString());
+			
+			Cookie providerCookie = new Cookie("provider", "google");
+			providerCookie.setPath("/");
+			providerCookie.setMaxAge(20);
+			response.addCookie(providerCookie);
 			
 			switch(clientType) {
 			
 			case "web":
 				try {
+					//response.sendRedirect("http://localhost:3000/auth/google/callback"); //로컬 기준
 					response.sendRedirect("http://kcoproject.site:3000/auth/google/callback");
+					// OAuth2 구글로그인 연동 redirect url에 따른 쿠키 수정
+					// 기존 http://kcoproject.site:3000/auth/google/callback 으로 처리했었으나 nginx에서 /auth 설정이 8080으로 요청하게끔 설정되어있다. 
+					// 그래서 http://kcoproject.site:3000/auth/google/callback 요청했을때 404에러가 떨어지는 것으로 파악되었다.
+					// 추측상 Auth2Controller의 /auth/{socialLoginType}/{clientType}로 요청이 올 것 같았지만 그렇지 않아 okky에 질문을 남겼다.  
+					// 또한 위의 경로로 redirect되었을 경우 쿠키의 path가 /auth/google/callback 라서 리액트 페이지에서 쿠키에 접근하려면 /auth/google/callback경로에서만 가능했다
+					// 그래서 쿠키의 path를 '/'로 수정함과 동시에 redirect도 http://kcoproject.site/로 함께 수정하여 루트경로에서도 접근 가능하도록 수정하였다. 
 					log.info("userId : {} Google OAuth redirect success ! ", userId);
-					// 현재 getUserInfo에서 생성한 JWT 정보들을 cookie로 전달한다.
-					// react의 Application에서 쿠키를 확인했을때 Path가 /auth/google/callback로 나온다(서버의 마지막 redirect 경로)
-					// sendRedirect의 정보를 쿠키에 접근할 수 있는 url로 리다이렉트한다. 
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

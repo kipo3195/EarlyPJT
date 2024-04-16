@@ -297,3 +297,7 @@
 	
 2024.04.15
 	1. OAuth2 구글로그인 연동 운영 url에 맞게 수정	
+	
+2024.04.16
+	1. OAuth2 구글로그인 연동 redirect url에 따른 쿠키 수정
+		GoogleOauth.java 참조 
