@@ -54,4 +54,9 @@ public class EarlyUser {
 	@Column(name="providerId")
 	private String providerId;
 	
+	// 사용자 프로필 추가
+	@Column(columnDefinition = "varchar(255) default '' ")
+	private String userProfile;
+	
+
 }

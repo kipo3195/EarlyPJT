@@ -159,13 +159,13 @@ public class GoogleOauth implements SocialOauth {
 			
 			case "web":
 				try {
-					//response.sendRedirect("http://localhost:3000/auth/google/callback"); //로컬 기준
-					response.sendRedirect("http://kcoproject.site:3000/auth/google/callback");
+					response.sendRedirect("http://localhost:3000/"); //로컬 기준
+					//response.sendRedirect("http://kcoproject.site/");
 					// OAuth2 구글로그인 연동 redirect url에 따른 쿠키 수정
 					// 기존 http://kcoproject.site:3000/auth/google/callback 으로 처리했었으나 nginx에서 /auth 설정이 8080으로 요청하게끔 설정되어있다. 
 					// 그래서 http://kcoproject.site:3000/auth/google/callback 요청했을때 404에러가 떨어지는 것으로 파악되었다.
-					// 추측상 Auth2Controller의 /auth/{socialLoginType}/{clientType}로 요청이 올 것 같았지만 그렇지 않아 okky에 질문을 남겼다.  
-					// 또한 위의 경로로 redirect되었을 경우 쿠키의 path가 /auth/google/callback 라서 리액트 페이지에서 쿠키에 접근하려면 /auth/google/callback경로에서만 가능했다
+					// 추측상 Auth2Controller의 /auth/{socialLoginType}/{clientType}로 요청이 올 것 같았지만 그렇지 않았다. 리액트 로그에 404 not found..
+					// 또한 위의 경로로 redirect 되었을 경우 쿠키의 path가 /auth/google/callback 라서 리액트 페이지에서 쿠키에 접근하려면 /auth/google/callback경로에서만 가능했다
 					// 그래서 쿠키의 path를 '/'로 수정함과 동시에 redirect도 http://kcoproject.site/로 함께 수정하여 루트경로에서도 접근 가능하도록 수정하였다. 
 					log.info("userId : {} Google OAuth redirect success ! ", userId);
 				} catch (IOException e) {

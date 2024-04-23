@@ -33,3 +33,5 @@ build/
 .vscode/
 /log/
 /ws_log/
+
+*.yml
