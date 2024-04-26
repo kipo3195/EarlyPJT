@@ -1,4 +1,4 @@
-package com.early.www.address.VO;
+package com.early.www.address.DTO;
 
 import lombok.Data;
 

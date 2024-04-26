@@ -305,3 +305,7 @@
 2024.04.23
 	1. EarlyUser에 userProfile 컬럼 추가 
 	2. 주소록 조회 API 생성 /address/list		
+	
+2024.04.26
+	1. 주소록 사용자 추가시 검색 API 생성 /address/searchUser
+		- 사용자 계정 & 이름 + 전화번호 검색
