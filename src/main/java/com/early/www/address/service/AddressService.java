@@ -1,13 +1,16 @@
 package com.early.www.address.service;
 
-import java.util.Map;
+import org.json.simple.JSONObject;
 
 import com.early.www.address.DTO.AddressSearchDTO;
+import com.early.www.address.model.AddressUserMapping;
 
 public interface AddressService {
 
-	Map<String, Object> getAddressList(String userId, String limit);
+	JSONObject getAddressList(String userId, String limit);
 	
-	Map<String, Object> getSearchUser(AddressSearchDTO addressSearchDTO);
+	JSONObject getSearchUser(AddressSearchDTO addressSearchDTO);
+
+	JSONObject putUser(AddressUserMapping earlyUser);
 
 }

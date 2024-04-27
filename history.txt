@@ -309,3 +309,11 @@
 2024.04.26
 	1. 주소록 사용자 추가시 검색 API 생성 /address/searchUser
 		- 사용자 계정 & 이름 + 전화번호 검색
+		
+2024.04.27
+	1. 주소록 사용자 추가 API 생성 /address/addUser
+		- 내 id, 사용자 id 
+	2. 주소록 매핑 사용자 테이블 변경	
+	3. 주소록 이벤트 API 형식 변경 
+		- Map -> JSONObject
+				
