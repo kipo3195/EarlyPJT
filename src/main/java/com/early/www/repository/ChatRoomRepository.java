@@ -18,6 +18,11 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long>{
 
 	@Query(nativeQuery = true, value = "update tbl_chat_room set last_line_key = :lineKey where chat_room_key = :roomKey")
 	public void save(String roomKey, String lineKey);
+	
+	
+	@Query(nativeQuery = true, value = "select * from tbl_chat_room where chat_room_key = :roomKey")
+	public ChatRoom findByRoomKey(String roomKey);
+	
 
 
 	

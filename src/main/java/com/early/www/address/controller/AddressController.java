@@ -54,6 +54,7 @@ public class AddressController {
 			
 		}
 		
+		System.out.println(resultJson);
 		return resultJson;
 	}
 	
@@ -61,7 +62,7 @@ public class AddressController {
 	@PostMapping("/searchUser")
 	public JSONObject getSearchUser(HttpServletRequest request, HttpServletResponse response, @RequestBody AddressSearchDTO addressSearchDTO){
 		JSONObject resultJson = new JSONObject();
-		log.info("[{}], body : {}", request.getRequestURL(), addressSearchDTO);
+		log.info("[{}], body : {}", request.getRequestURI(), addressSearchDTO);
 		String error = (String) response.getHeader("error_code");
 		
 		if(error != null) {

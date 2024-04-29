@@ -66,6 +66,7 @@ public class UserChatController {
 		
 		Map<String, String> resultMap = new HashMap<String, String>();
 		
+		log.info("[{}], body : {}", request.getRequestURI(), chatroom);
 		String error = (String) response.getHeader("error_code");
 		if(error != null) {
 			resultMap.put("flag", "fail");
@@ -456,7 +457,38 @@ public class UserChatController {
 		//}
 			
 	}
-
+	// 주소록에서 방 조회시 
+	@PostMapping("/user/getAddrChatLine")
+	public JSONObject getAddrChatLine (HttpServletRequest request, @RequestBody ChatRoom chatRoom, HttpServletResponse response) {
+		JSONObject resultJson = new JSONObject();
+		
+		log.info("[{}], body : {}", request.getRequestURI(), chatRoom);
+		String error = (String) response.getHeader("error_code");
+		
+		if(error != null) {
+			JSONObject type = new JSONObject();
+			type.put("result", "fail");
+			
+			JSONObject data = new JSONObject();
+			data.put("error_msg", response.getHeader("error_code"));
+			
+			resultJson.put("type", type);
+			resultJson.put("data", data);
+			
+			log.info("[{}]", request.getRequestURI(), resultJson);
+		}else {
+			
+			String username = (String) request.getAttribute("username");
+			
+			if(username != null) {
+				resultJson = chatService.getAddrChatLine(chatRoom, username, simpMessagingTemplate);
+			}else {
+				System.out.println("주소록 방 조회 에러.. username : "+ username);
+			}
+		}
+		
+		return resultJson;
+	}
 	
 	// 채팅방의 라인 조회 (방 입장)
 	@PostMapping("/user/chatRoomLine")										// body 데이터
@@ -602,6 +634,7 @@ public class UserChatController {
 			
 			return resultMap;
 		}
+		
 
 		
 		

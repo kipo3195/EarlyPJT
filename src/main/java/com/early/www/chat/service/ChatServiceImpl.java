@@ -1,6 +1,7 @@
 package com.early.www.chat.service;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -16,6 +17,7 @@ import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.early.www.chat.VO.ChatLineEventVO;
@@ -28,6 +30,8 @@ import com.early.www.repository.ChatRoomRepository;
 import com.early.www.repository.EarlyUserRepository;
 import com.early.www.user.model.EarlyUser;
 import com.early.www.util.CommonConst;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class ChatServiceImpl implements ChatService {
@@ -658,7 +662,92 @@ public class ChatServiceImpl implements ChatService {
 	}
 
 
+	@Override
+	public JSONObject getAddrChatLine(ChatRoom dto, String username, SimpMessagingTemplate simpMessagingTemplate ) {
+		JSONObject jsonObj = new JSONObject();
+		JSONObject type = new JSONObject();
+		JSONObject data = new JSONObject();
+		
+		ChatRoom chatRoom = null;
+		// chatRoom이 존재하는지 체크 
+		if(dto != null) {
+			
+			if(dto.getChatRoomKey() != null) {
+				chatRoom = chatRoomRepository.findByRoomKey(dto.getChatRoomKey());
+				
+				// 방 생성
+				if(chatRoom != null) {
+					// 읽음처리 - redis
+					Map<String, Object> unreadJson = getReadSuccessLines(chatRoom.getChatRoomKey(), username, "0");
+					// 미확인 건수 갱신 & 전달(웹소켓)
+					if(unreadJson != null && !unreadJson.isEmpty()) {
+						
+						JSONObject result = (JSONObject) unreadJson.get("result");
 
+						// 유효성 검사 체크 로직 추가 할 것 TODO
+						
+						/* linekey:count는 웹 소켓으로 전달 */
+						// 보낼 경로 설정
+						String dest = "/topic/room/"+chatRoom.getChatRoomKey();
+						// 발송
+						if(result != null && !result.isEmpty()) {
+							JSONObject socketJson = new JSONObject();
+							socketJson.put("result", result);
+							socketJson.put("type", "readLines");
+							simpMessagingTemplate.convertAndSend(dest, socketJson.toJSONString());
+						}
+						
+						
+						/* 라인 리스트 조회 */
+						List<ChatMain> lineList = getChatRoomLine(chatRoom.getChatRoomKey());
+						if(lineList != null && !lineList.isEmpty()) {
+							ObjectMapper mapper = new ObjectMapper();
+							
+							List<String> list = new ArrayList<String>();
+							
+							// 객체를 json형태의 String으로 변환 
+							for(int i = 0; i < lineList.size(); i++) {
+								ChatMain chatMain = lineList.get(i);
+								
+								try {
+									list.add(mapper.writeValueAsString(chatMain));
+								} catch (JsonProcessingException e) {
+									e.printStackTrace();
+								}
+							}
+							
+							data.put("chatRoomLine", list.toString());
+							// 다음 요청의 기준이되는 라인키 생성
+							if(list.size() > 0) {
+								data.put("nextLine", lineList.get(0).getChatLineKey());
+							}else {
+								data.put("nextLine", "0");
+							}
+						}
+						
+					}
+					
+				}else {
+					// 생성되기 전에는 room_key를 다시 내려줌 
+					data.put("room_key", dto.getChatRoomKey());
+				}
+				type.put("result", "success");
+			}else {
+				//error
+				type.put("result", "fail");
+				data.put("error_msg", "data_invalid");
+			}
+		}else {
+			//error
+			type.put("result", "fail");
+			data.put("error_msg", "body_data_invalid");
+		}
+		
+		jsonObj.put("type", type);
+		jsonObj.put("data", data);
+		
+		return jsonObj;
+	}
 
 
 }

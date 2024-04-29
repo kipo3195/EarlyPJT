@@ -159,8 +159,8 @@ public class GoogleOauth implements SocialOauth {
 			
 			case "web":
 				try {
-					response.sendRedirect("http://localhost:3000/"); //로컬 기준
-					//response.sendRedirect("http://kcoproject.site/");
+					// response.sendRedirect("http://localhost:3000/"); // 로컬 기준
+					response.sendRedirect("http://kcoproject.site/");
 					// OAuth2 구글로그인 연동 redirect url에 따른 쿠키 수정
 					// 기존 http://kcoproject.site:3000/auth/google/callback 으로 처리했었으나 nginx에서 /auth 설정이 8080으로 요청하게끔 설정되어있다. 
 					// 그래서 http://kcoproject.site:3000/auth/google/callback 요청했을때 404에러가 떨어지는 것으로 파악되었다.

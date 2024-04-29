@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.json.simple.JSONObject;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import com.early.www.chat.VO.ChatLineEventVO;
 import com.early.www.chat.model.ChatMain;
@@ -43,6 +44,10 @@ public interface ChatService {
 	public List<EarlyUser> getChatRoomUserList(String sender);
 
 	public String putChatRoom(ChatRoom chatroom);
+
+	public JSONObject getAddrChatLine(ChatRoom chatRoom, String username, SimpMessagingTemplate simpMessagingTemplate);
+	
+	
 	
 	
 }

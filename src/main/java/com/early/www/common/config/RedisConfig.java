@@ -28,7 +28,7 @@ public class RedisConfig {
 	@Bean
 	public RedisConnectionFactory redisConnectionFactory() {
 		LettuceConnectionFactory lettuceConnectionFactory = new LettuceConnectionFactory();
-		//lettuceConnectionFactory.setPassword(redisProperties.getRedisPassword()); // 운영시 해제 
+		//lettuceConnectionFactory.setPassword(redisProperties.getRedisPassword()); // 로컬 기준
 		return lettuceConnectionFactory;
 	}
 	

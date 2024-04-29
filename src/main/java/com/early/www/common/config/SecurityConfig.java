@@ -56,7 +56,7 @@ public class SecurityConfig {
 								// JwtAuthenticationFilter에 정의된 방식으로 인증처리를 진행함. 
 		.addFilter(new JwtAuthenticationFilter(authenticationManager(authenticationConfiguration), tokenRepository))
 		.addFilter(new JwtAuthorizationFilterV2(authenticationManager(authenticationConfiguration), commonRepository, tokenRepository))
-		.requestMatchers().antMatchers("/user/**","/login").and() // 특정 URL에만 Filter를 태우도록 처리함. (jwt)
+		.requestMatchers().antMatchers("/user/**","/login","/address/**").and() // 특정 URL에만 Filter를 태우도록 처리함. (jwt)
 		.authorizeRequests()	// 다음 리퀘스트에 대한 사용자 권한 체크
 		//.antMatchers("/user/**").hasRole("USER") //role 기반이 아닌 url - jwt 기반으로 처리
 		.anyRequest().permitAll(); // 다른 요청은 권한 없이 들어갈 수 있도록 처리함
