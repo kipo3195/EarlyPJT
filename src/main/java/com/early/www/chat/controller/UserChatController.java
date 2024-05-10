@@ -12,8 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -22,13 +20,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.early.www.chat.VO.ChatLineEventVO;
-import com.early.www.chat.VO.ChatReadVO;
-import com.early.www.chat.VO.ChatRoomUserVO;
+import com.early.www.chat.dto.ChatLineDTO;
+import com.early.www.chat.dto.ChatLineEventDTO;
+import com.early.www.chat.dto.ChatReadDTO;
+import com.early.www.chat.dto.ChatRoomUserDTO;
 import com.early.www.chat.model.ChatMain;
 import com.early.www.chat.model.ChatRoom;
 import com.early.www.chat.service.ChatService;
 import com.early.www.user.model.EarlyUser;
+import com.early.www.util.CommonConst;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -130,7 +130,7 @@ public class UserChatController {
 	
 	// 채팅방 참여자 조회 
 	@PostMapping("/user/getChatRoomUsers") // @requestBody는 한번의 request에 하나의 Object만 받을 수 있다. @RequestBody String A,  @RequestBody String B 안됨.
-	public Map<String, String> getChatRoomUsers(HttpServletRequest request, HttpServletResponse response, @RequestBody ChatRoomUserVO chatRoomUserVO){
+	public Map<String, String> getChatRoomUsers(HttpServletRequest request, HttpServletResponse response, @RequestBody ChatRoomUserDTO chatRoomUserVO){
 		
 		
 		Map<String, String> resultMap = new HashMap<String, String>();
@@ -186,7 +186,7 @@ public class UserChatController {
 	
 	// 라인 별 이벤트 사용자 조회
 	@PostMapping("/user/getChatLineEventUser")
-	public Map<String, String> getChatLineEventUser(HttpServletRequest request, HttpServletResponse response, @RequestBody ChatLineEventVO chatLineEventVO){
+	public Map<String, String> getChatLineEventUser(HttpServletRequest request, HttpServletResponse response, @RequestBody ChatLineEventDTO chatLineEventVO){
 		
 		Map<String, String> resultMap = new HashMap<String, String>();
 		String error = (String) response.getHeader("error_code");
@@ -215,7 +215,7 @@ public class UserChatController {
 	// 좋아요 이벤트 처리 
 	// 프로젝트의 문서 참조
 	@PostMapping("/user/putChatLineEvent")
-	public Map<String, String> putChatLineEvent(HttpServletRequest request, HttpServletResponse response,  @RequestBody ChatLineEventVO chatLineEventVO){
+	public Map<String, String> putChatLineEvent(HttpServletRequest request, HttpServletResponse response,  @RequestBody ChatLineEventDTO chatLineEventVO){
 		Map<String, String> resultMap = new HashMap<String, String>();
 		
 		String error = (String) response.getHeader("error_code");
@@ -268,7 +268,7 @@ public class UserChatController {
     // /user/readLines의 response를 통해 채팅 전체 건수, 해당 채팅방의 건수를 전달 (resultMap)
     // 웹소켓을 통해 해당 채팅방을 구독하는 모든 사용자에게 읽음 처리된 라인을 라인:건수의 형식으로 publish 하여 처리.(socketJson)
 	@PostMapping("/user/readLines")
-	public Map<String, String> readLines(HttpServletRequest request, HttpServletResponse response, @RequestBody ChatReadVO chatReadVO){
+	public Map<String, String> readLines(HttpServletRequest request, HttpServletResponse response, @RequestBody ChatReadDTO chatReadVO){
 		Map<String, String> resultMap = new HashMap<String, String>();
 		String error = (String) response.getHeader("error_code");
 		if(error != null) {
@@ -278,7 +278,8 @@ public class UserChatController {
 			
 			String username = (String) request.getAttribute("username");
 			
-			Map<String, Object> unreadJson = chatService.getReadSuccessLines(chatReadVO.getChatRoomKey(), username, chatReadVO.getRecvLine());
+			//Map<String, Object> unreadJson = chatService.getReadSuccessLines(chatReadVO.getChatRoomKey(), username, chatReadVO.getRecvLine());
+			Map<String, Object> unreadJson = chatService.putChatUnreadLines(chatReadVO.getChatRoomKey(), username, simpMessagingTemplate);
 			// return 하면 이벤트 수신 요청자 (수신자) 처리
 			
 			if(unreadJson != null && !unreadJson.isEmpty()) {
@@ -286,20 +287,20 @@ public class UserChatController {
 				String type = (String) unreadJson.get("type");
 				String chat = (String) unreadJson.get("chat");
 				String room = (String) unreadJson.get("room");
-				JSONObject result = (JSONObject) unreadJson.get("result");
+				//JSONObject result = (JSONObject) unreadJson.get("result");
 
 				// 유효성 검사 체크 로직 추가 할 것 TODO
 				
 				/* linekey:count는 웹 소켓으로 전달 */
 				// 보낼 경로 설정
-				String dest = "/topic/room/"+chatReadVO.getChatRoomKey();
+				//String dest = "/topic/room/"+chatReadVO.getChatRoomKey();
 				// 발송
-				if(result != null && !result.isEmpty()) {
-					JSONObject socketJson = new JSONObject();
-					socketJson.put("result", result);
-					socketJson.put("type", "readLines");
-					simpMessagingTemplate.convertAndSend(dest, socketJson.toJSONString());
-				}
+//				if(result != null && !result.isEmpty()) {
+//					JSONObject socketJson = new JSONObject();
+//					socketJson.put("result", result);
+//					socketJson.put("type", "readLines");
+//					simpMessagingTemplate.convertAndSend(dest, socketJson.toJSONString());
+//				}
 				
 				/* 전체건수, 채팅방 건수는 response로 전달 */
 				resultMap.put("type", type);
@@ -381,6 +382,7 @@ public class UserChatController {
 			log.info("[/user/chat] check ChatMain : {}", main);
 			return;
 		}
+	
 		
 		/* 검증된 데이터 */ 
 		String roomKey = main.getChatRoomKey();
@@ -417,6 +419,7 @@ public class UserChatController {
 		String dest = "/topic/room/"+roomKey;
 
 		// 발송 - chatData + 라인의 미확인 건수
+		System.out.println("채팅 발송 dest : "+dest);
 		simpMessagingTemplate.convertAndSend(dest, sendData.toJSONString());
 
 		
@@ -458,7 +461,7 @@ public class UserChatController {
 			
 	}
 	// 주소록에서 방 조회시 
-	@PostMapping("/user/getAddrChatLine")
+	@PostMapping("/user/getAddrChatInfo")
 	public JSONObject getAddrChatLine (HttpServletRequest request, @RequestBody ChatRoom chatRoom, HttpServletResponse response) {
 		JSONObject resultJson = new JSONObject();
 		
@@ -490,6 +493,40 @@ public class UserChatController {
 		return resultJson;
 	}
 	
+	// 20240510 기준 방입장 API 주소록에서 방 조회시 
+	@PostMapping("/user/getChatLines")
+	public JSONObject getChatLines (HttpServletRequest request, @RequestBody ChatLineDTO chatLineDTO, HttpServletResponse response) {
+		JSONObject resultJson = new JSONObject();
+		
+		log.info("[{}] request, body : {}", request.getRequestURI(), chatLineDTO);
+		String error = (String) response.getHeader("error_code");
+		
+		if(error != null || chatLineDTO == null) {
+			
+			JSONObject data = new JSONObject();
+			data.put(CommonConst.RESPONSE_DATA_ERROR_MSG, response.getHeader("error_code"));
+			
+			resultJson.put("type", CommonConst.RESPONSE_TYPE_FAIL);
+			resultJson.put("data", data);
+			
+		}else {
+			// 토큰에 있는 사용자 ID
+			String username = (String) request.getAttribute("username");
+			
+			if(username != null && chatLineDTO.getUserId() != null && username.equals(chatLineDTO.getUserId())) {
+				resultJson = chatService.getChatLines(chatLineDTO, simpMessagingTemplate);
+			}else {
+				JSONObject data = new JSONObject();
+				data.put(CommonConst.RESPONSE_DATA_ERROR_MSG, CommonConst.INVALID_USER_ID);
+				
+				resultJson.put("type", CommonConst.RESPONSE_TYPE_FAIL);
+				resultJson.put("data", data);
+			}
+		}
+		log.info("[{}] response, body : {}", request.getRequestURI(), resultJson);
+		return resultJson;
+	}
+	
 	// 채팅방의 라인 조회 (방 입장)
 	@PostMapping("/user/chatRoomLine")										// body 데이터
 	public Map<String, String> getChatRoomLine(HttpServletRequest request, @RequestBody ChatRoom chatRoom, HttpServletResponse response) {
@@ -512,57 +549,58 @@ public class UserChatController {
 				
 				if(!StringUtils.isEmpty(chatRoomKey)) { 
 					
-					/* 입장한 채팅방 읽음처리  "0" -> 모두 읽음 처리 하겠다. */
-					Map<String, Object> unreadJson = chatService.getReadSuccessLines(chatRoomKey, username, "0");
-					// 미확인 건수 갱신 & 전달(웹소켓)
-					if(unreadJson != null && !unreadJson.isEmpty()) {
-						
-						String type = (String) unreadJson.get("type");
-						String chat = (String) unreadJson.get("chat");
-						String room = (String) unreadJson.get("room");
-						JSONObject result = (JSONObject) unreadJson.get("result");
-
-						// 유효성 검사 체크 로직 추가 할 것 TODO
-						
-						/* linekey:count는 웹 소켓으로 전달 */
-						// 보낼 경로 설정
-						String dest = "/topic/room/"+chatRoomKey;
-						// 발송
-						if(result != null && !result.isEmpty()) {
-							JSONObject socketJson = new JSONObject();
-							socketJson.put("result", result);
-							socketJson.put("type", "readLines");
-							simpMessagingTemplate.convertAndSend(dest, socketJson.toJSONString());
-						}
-						
-					}else {}
-					
-					/* 라인 리스트 조회 */
-					List<ChatMain> lineList = chatService.getChatRoomLine(chatRoomKey);
-					if(lineList != null && !lineList.isEmpty()) {
-						ObjectMapper mapper = new ObjectMapper();
-						
-						List<String> list = new ArrayList<String>();
-						
-						// 객체를 json형태의 String으로 변환 
-						for(int i = 0; i < lineList.size(); i++) {
-							ChatMain chatMain = lineList.get(i);
-							
-							try {
-								list.add(mapper.writeValueAsString(chatMain));
-							} catch (JsonProcessingException e) {
-								e.printStackTrace();
-							}
-						}
-						
-						resultMap.put("chatRoomLine", list.toString());
-						// 다음 요청의 기준이되는 라인키 생성
-						if(list.size() > 0) {
-							resultMap.put("nextLine", lineList.get(0).getChatLineKey());
-						}else {
-							resultMap.put("nextLine", "0");
-						}
-					}
+//					/* 입장한 채팅방 읽음처리  "0" -> 모두 읽음 처리 하겠다. */
+//					Map<String, Object> unreadJson = chatService.getReadSuccessLines(chatRoomKey, username, "0");
+//					// 미확인 건수 갱신 & 전달(웹소켓)
+//					if(unreadJson != null && !unreadJson.isEmpty()) {
+//						
+//						String type = (String) unreadJson.get("type");
+//						String chat = (String) unreadJson.get("chat");
+//						String room = (String) unreadJson.get("room");
+//						
+//						// 내가 방에 입장하므로써 읽은 라인 : 건수 데이터를 해당 방을 구독하고 있는 사용자에게 전달
+//						JSONObject result = (JSONObject) unreadJson.get("result");
+//
+//						// 유효성 검사 체크 로직 추가 할 것 TODO
+//						
+//						/* linekey:count는 웹 소켓으로 전달 */
+//						// 보낼 경로 설정
+//						String dest = "/topic/room/"+chatRoomKey;
+//						// 발송
+//						if(result != null && !result.isEmpty()) {
+//							JSONObject socketJson = new JSONObject();
+//							socketJson.put("result", result);
+//							socketJson.put("type", "readLines");
+//							simpMessagingTemplate.convertAndSend(dest, socketJson.toJSONString());
+//						}
+//						
+//					}else {}
+//					
+//					/* 라인 리스트 조회 */
+//					List<ChatMain> lineList = chatService.getChatRoomLine(chatRoomKey);
+//					if(lineList != null && !lineList.isEmpty()) {
+//						ObjectMapper mapper = new ObjectMapper();
+//						
+//						List<String> list = new ArrayList<String>();
+//						
+//						// 객체를 json형태의 String으로 변환 
+//						for(int i = 0; i < lineList.size(); i++) {
+//							ChatMain chatMain = lineList.get(i);
+//							try {
+//								list.add(mapper.writeValueAsString(chatMain));
+//							} catch (JsonProcessingException e) {
+//								e.printStackTrace();
+//							}
+//						}
+//						
+//						resultMap.put("chatRoomLine", list.toString());
+//						// 다음 요청의 기준이되는 라인키 생성
+//						if(list.size() > 0) {
+//							resultMap.put("nextLine", lineList.get(0).getChatLineKey());
+//						}else {
+//							resultMap.put("nextLine", "0");
+//						}
+//					}
 				}
 			}else {
 				// 토큰은 검증했지만 username이 없는경우?

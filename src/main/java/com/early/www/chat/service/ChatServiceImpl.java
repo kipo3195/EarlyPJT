@@ -20,7 +20,8 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import com.early.www.chat.VO.ChatLineEventVO;
+import com.early.www.chat.dto.ChatLineDTO;
+import com.early.www.chat.dto.ChatLineEventDTO;
 import com.early.www.chat.model.ChatList;
 import com.early.www.chat.model.ChatMain;
 import com.early.www.chat.model.ChatRoom;
@@ -127,10 +128,10 @@ public class ChatServiceImpl implements ChatService {
 
 	// 채팅방 데이터 조회 (최초)
 	@Override
-	public List<ChatMain> getChatRoomLine(String chatRoomKey) {
+	public List<ChatMain> getChatRoomLine(String chatRoomKey, String readLineKey) {
 		
 		// 라인 조회 DB
-		List<ChatMain> chatMainList = chatMainRepository.findByChatRoomKey(chatRoomKey);
+		List<ChatMain> chatMainList = chatMainRepository.findByChatRoomKey(chatRoomKey, readLineKey);
 		
 		RedisSerializer hashKeySerializer = redisTemplate.getHashKeySerializer();
 		RedisSerializer hashValueSerializer = redisTemplate.getHashValueSerializer();
@@ -438,7 +439,7 @@ public class ChatServiceImpl implements ChatService {
 
 	// 읽음 요청 
 	@Override
-	public Map<String, Object> getReadSuccessLines(String roomKey, String username, String startLineKey) {
+	public Map<String, Object> putChatUnreadLines(String roomKey, String username, SimpMessagingTemplate simpMessagingTemplate) {
 		// 전달받은 라인 이후의 신규 수신 라인 읽음처리 
 		Map<String, Object> map = new HashMap<String, Object>();
 		
@@ -456,8 +457,10 @@ public class ChatServiceImpl implements ChatService {
 
 				// 해당 방의 전체 미확인 건수 조회
 				String key = "myUnreadLine:"+roomKey+":"+username;
+				
 				Set<byte[]> myUnreadLineSet = connection.zRangeByScore(keySerializer.serialize(key), startLine, 99999999999999999L);
 
+				System.out.println("신규로 읽는 라인의 숫자 : "+ myUnreadLineSet.size());
 				Object[] arr = myUnreadLineSet.toArray();
 				for(int i = 0; i < arr.length; i++) {
 					
@@ -497,7 +500,18 @@ public class ChatServiceImpl implements ChatService {
 				map.put("type", "chat");	
 				map.put("chat", String.valueOf(allCount));	// 채팅 전체 건수
 				map.put("room", String.valueOf(lineCount)); // 해당 채팅방의 건수 
-				map.put("result", json);
+				//map.put("result", json); // 읽음 처리된 라인 정보
+				
+				
+				/* linekey:count는 웹 소켓으로 전달 */
+				// 보낼 경로 설정
+				String dest = "/topic/room/"+roomKey;
+				
+				JSONObject socketJson = new JSONObject();
+				socketJson.put("result", json);
+				socketJson.put("type", "readLines");
+				simpMessagingTemplate.convertAndSend(dest, socketJson.toJSONString());
+				
 				if(connection != null) {
 					connection.close();
 				}
@@ -510,7 +524,7 @@ public class ChatServiceImpl implements ChatService {
 
 
 	@Override
-	public JSONObject putLikeEvent(String username, ChatLineEventVO chatLineEventVO) {
+	public JSONObject putLikeEvent(String username, ChatLineEventDTO chatLineEventVO) {
 		
 		RedisSerializer keySerializer = redisTemplate.getKeySerializer();
 		RedisSerializer valueSerializer = redisTemplate.getValueSerializer();
@@ -663,7 +677,7 @@ public class ChatServiceImpl implements ChatService {
 
 
 	@Override
-	public JSONObject getAddrChatLine(ChatRoom dto, String username, SimpMessagingTemplate simpMessagingTemplate ) {
+	public JSONObject getAddrChatLine(ChatRoom dto, String username, SimpMessagingTemplate simpMessagingTemplate) {
 		JSONObject jsonObj = new JSONObject();
 		JSONObject type = new JSONObject();
 		JSONObject data = new JSONObject();
@@ -673,63 +687,67 @@ public class ChatServiceImpl implements ChatService {
 		if(dto != null) {
 			
 			if(dto.getChatRoomKey() != null) {
+				
 				chatRoom = chatRoomRepository.findByRoomKey(dto.getChatRoomKey());
 				
 				// 방 생성
 				if(chatRoom != null) {
-					// 읽음처리 - redis
-					Map<String, Object> unreadJson = getReadSuccessLines(chatRoom.getChatRoomKey(), username, "0");
-					// 미확인 건수 갱신 & 전달(웹소켓)
-					if(unreadJson != null && !unreadJson.isEmpty()) {
-						
-						JSONObject result = (JSONObject) unreadJson.get("result");
-
-						// 유효성 검사 체크 로직 추가 할 것 TODO
-						
-						/* linekey:count는 웹 소켓으로 전달 */
-						// 보낼 경로 설정
-						String dest = "/topic/room/"+chatRoom.getChatRoomKey();
-						// 발송
-						if(result != null && !result.isEmpty()) {
-							JSONObject socketJson = new JSONObject();
-							socketJson.put("result", result);
-							socketJson.put("type", "readLines");
-							simpMessagingTemplate.convertAndSend(dest, socketJson.toJSONString());
-						}
-						
-						
-						/* 라인 리스트 조회 */
-						List<ChatMain> lineList = getChatRoomLine(chatRoom.getChatRoomKey());
-						if(lineList != null && !lineList.isEmpty()) {
-							ObjectMapper mapper = new ObjectMapper();
-							
-							List<String> list = new ArrayList<String>();
-							
-							// 객체를 json형태의 String으로 변환 
-							for(int i = 0; i < lineList.size(); i++) {
-								ChatMain chatMain = lineList.get(i);
-								
-								try {
-									list.add(mapper.writeValueAsString(chatMain));
-								} catch (JsonProcessingException e) {
-									e.printStackTrace();
-								}
-							}
-							
-							data.put("chatRoomLine", list.toString());
-							// 다음 요청의 기준이되는 라인키 생성
-							if(list.size() > 0) {
-								data.put("nextLine", lineList.get(0).getChatLineKey());
-							}else {
-								data.put("nextLine", "0");
-							}
-						}
-						
-					}
-					
+//					// 읽음처리 - redis
+//					Map<String, Object> unreadJson = getReadSuccessLines(chatRoom.getChatRoomKey(), username, "0");
+//					// 미확인 건수 갱신 & 전달(웹소켓)
+//					if(unreadJson != null && !unreadJson.isEmpty()) {
+//						
+//						JSONObject result = (JSONObject) unreadJson.get("result");
+//
+//						// 유효성 검사 체크 로직 추가 할 것 TODO
+//						
+//						/* linekey:count는 웹 소켓으로 전달 */
+//						// 보낼 경로 설정
+//						String dest = "/topic/room/"+chatRoom.getChatRoomKey();
+//						// 발송
+//						if(result != null && !result.isEmpty()) {
+//							JSONObject socketJson = new JSONObject();
+//							socketJson.put("result", result);
+//							socketJson.put("type", "readLines");
+//							simpMessagingTemplate.convertAndSend(dest, socketJson.toJSONString());
+//						}
+//						
+//						
+//						/* 라인 리스트 조회 */
+//						List<ChatMain> lineList = getChatRoomLine(chatRoom.getChatRoomKey());
+//						if(lineList != null && !lineList.isEmpty()) {
+//							ObjectMapper mapper = new ObjectMapper();
+//							
+//							List<String> list = new ArrayList<String>();
+//							
+//							// 객체를 json형태의 String으로 변환 
+//							for(int i = 0; i < lineList.size(); i++) {
+//								ChatMain chatMain = lineList.get(i);
+//								
+//								try {
+//									list.add(mapper.writeValueAsString(chatMain));
+//								} catch (JsonProcessingException e) {
+//									e.printStackTrace();
+//								}
+//							}
+//							
+//							data.put("chatRoomLine", list.toString());
+//							data.put("title", chatRoom.getChatRoomTitle());
+//							data.put("chatRoomKey", chatRoom.getChatRoomKey());
+//							
+//							// 다음 요청의 기준이되는 라인키 생성
+//							if(list.size() > 0) {
+//								data.put("nextLine", lineList.get(0).getChatLineKey());
+//							}else {
+//								data.put("nextLine", "0");
+//							}
+//						}
+//						
+//					}
+//					
 				}else {
 					// 생성되기 전에는 room_key를 다시 내려줌 
-					data.put("room_key", dto.getChatRoomKey());
+					data.put("newChatRoomKey", dto.getChatRoomKey());
 				}
 				type.put("result", "success");
 			}else {
@@ -748,6 +766,76 @@ public class ChatServiceImpl implements ChatService {
 		
 		return jsonObj;
 	}
+	
+	
+	@Override
+	public JSONObject getChatLines(ChatLineDTO dto, SimpMessagingTemplate simpMessagingTemplate) {
+		JSONObject resultJson = new JSONObject();
+		JSONObject data = new JSONObject();
+		
+		String roomKey = null;
+		String userId = dto.getUserId();
+		
+		// 방이 생성되어 있는지 체크
+		if(dto.getEnterType() != null) {
+			if(dto.getEnterType().equals("a")) {
+				// 주소록에서 입장
+				ChatRoom chatRoom = chatRoomRepository.findByRoomKey(dto.getRoomKey());
+				if(chatRoom != null) {
+					roomKey = chatRoom.getChatRoomKey();
+					// 주소록에서 입장한 방은 방 이름을 알 수 없음. 
+					data.put("title", chatRoom.getChatRoomTitle());
+				}else {
+					// 생성되지 않은 방
+					data.put("newChatRoomKey", dto.getRoomKey());
+				}
+			}else {
+				roomKey = dto.getRoomKey();
+			}
+		}else {
+			
+			data.put(CommonConst.RESPONSE_DATA_ERROR_MSG, CommonConst.INVALID_BODY_DATA);
+
+			resultJson.put("type", CommonConst.RESPONSE_TYPE_FAIL);
+			resultJson.put("data", data);
+			return resultJson;
+		}
+		
+		// 읽음처리 - redis 미확인 건수 갱신 & 전달(웹소켓) TODO Queue thread로 처리할 수 있다면?
+		Map<String, Object> unreadJson = putChatUnreadLines(roomKey, userId, simpMessagingTemplate);
+				
+		if(unreadJson != null && !unreadJson.isEmpty()) {
+			
+			List<ChatMain> lineList = getChatRoomLine(roomKey, dto.getReadLineKey());
+			
+			if(lineList != null && !lineList.isEmpty()) {
+				ObjectMapper mapper = new ObjectMapper();
+				List<String> list = new ArrayList<String>();
+				
+				// 객체를 json형태의 String으로 변환 
+				for(int i = 0; i < lineList.size(); i++) {
+					ChatMain chatMain = lineList.get(i);
+					try {
+						list.add(mapper.writeValueAsString(chatMain));
+					} catch (JsonProcessingException e) {
+						e.printStackTrace();
+					}
+				}
+				data.put("chatRoomLine", list.toString());
+				data.put("chatRoomKey", roomKey);
+			}
+		}
+		
+		resultJson.put("type", CommonConst.RESPONSE_TYPE_SUCCESS);
+		resultJson.put("data", data);
+		
+		return resultJson;
+	}
+
+	
+	
+	
+	
 
 
 }

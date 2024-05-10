@@ -6,7 +6,8 @@ import java.util.Map;
 import org.json.simple.JSONObject;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
-import com.early.www.chat.VO.ChatLineEventVO;
+import com.early.www.chat.dto.ChatLineDTO;
+import com.early.www.chat.dto.ChatLineEventDTO;
 import com.early.www.chat.model.ChatMain;
 import com.early.www.chat.model.ChatRoom;
 import com.early.www.user.model.EarlyUser;
@@ -21,7 +22,7 @@ public interface ChatService {
 	
 	public void putChatRoom(String roomKey, String lineKey);
 
-	public List<ChatMain> getChatRoomLine(String chatRoomKey);
+	public List<ChatMain> getChatRoomLine(String chatRoomKey, String readLineKey);
 	
 	public List<ChatMain> getChatRoomLineAppend(String chatRoomKey, String lineKey);
 	
@@ -33,9 +34,9 @@ public interface ChatService {
 	
 	//public Map<String, String> putChatRoomUnread(String roomKey, String username, String startLineKey);
 	
-	public Map<String, Object> getReadSuccessLines(String roomKey, String username, String startLineKey);
+	public Map<String, Object> putChatUnreadLines(String roomKey, String username, SimpMessagingTemplate simpMessagingTemplate);
 
-	public JSONObject putLikeEvent(String username, ChatLineEventVO chatLineEventVO);
+	public JSONObject putLikeEvent(String username, ChatLineEventDTO chatLineEventVO);
 	
 	public JSONObject getChatLineEventUser(String roomKey, String lineKey);
 	
@@ -46,6 +47,8 @@ public interface ChatService {
 	public String putChatRoom(ChatRoom chatroom);
 
 	public JSONObject getAddrChatLine(ChatRoom chatRoom, String username, SimpMessagingTemplate simpMessagingTemplate);
+	
+	public JSONObject getChatLines(ChatLineDTO chatLineDTO, SimpMessagingTemplate simpMessagingTemplate);
 	
 	
 	

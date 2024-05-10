@@ -1,9 +1,9 @@
-package com.early.www.chat.VO;
+package com.early.www.chat.dto;
 
 import lombok.Data;
 
 @Data	
-public class ChatReadVO {
+public class ChatReadDTO {
 	
 	private String chatRoomKey;
 	private String recvLine;

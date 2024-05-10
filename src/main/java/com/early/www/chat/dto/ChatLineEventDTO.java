@@ -1,9 +1,9 @@
-package com.early.www.chat.VO;
+package com.early.www.chat.dto;
 
 import lombok.Data;
 
 @Data
-public class ChatLineEventVO {
+public class ChatLineEventDTO {
 	
 	private String roomKey;
 	private String lineKey;

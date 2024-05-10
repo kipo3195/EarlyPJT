@@ -93,11 +93,12 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 			
 			// jwt header에 넘어온 token을 통해서 정상적인 사용자인지 체킹
 			String jwtToken = jwtHeader.replace("Bearer ", "");
-			
+			System.out.println();
+			//System.out.println("토큰 검증 로직에서 jwtToken : " + jwtToken);
 			try {
 				
 				 username = JWT.require(Algorithm.HMAC512("early")).build().verify(jwtToken).getClaim("username").asString();
-			
+				 //System.out.println("토큰 검증 로직에서 username : " + username);
 				 
 			}catch(TokenExpiredException e) {
 				// access token 만료 -> 무조건 로그아웃 처리 
@@ -122,10 +123,11 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 						chain.doFilter(request, response);
 						return;
 					}
-					
+					//System.out.println("토큰 검증로직에서 userEntity : "+userEntity);
 					PrincipalDetails principalDetails = new PrincipalDetails(userEntity);
 
-
+					//System.out.println("토큰 검증로직에서 principalDetails : "+principalDetails);
+					
 					// web worker를 통한 access token 재발급 API
 					if(request.getRequestURI().equals("/user/accessToken")) {
 						String nowDate = null;
@@ -153,7 +155,10 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 											
 										}
 										if(refreshToken != null && nowDate != null) {
+											//System.out.println("토큰 검증시 refreshToken : " +refreshToken);
+											//System.out.println("토큰 검증시 nowDate : " +nowDate);
 											RefreshToken savedToken = tokenRepository.findByRefreshTokenAndCreateTime(refreshToken, nowDate);
+											//System.out.println("토큰 검증시 savedToken : "+ savedToken);
 											if(savedToken != null) {
 												// token 갱신 처리
 

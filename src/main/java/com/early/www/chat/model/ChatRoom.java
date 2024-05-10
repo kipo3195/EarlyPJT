@@ -38,5 +38,5 @@ public class ChatRoom {
 	
 	@Column(name="unread_count", length=4)
 	private String unreadCount;
-
+	
 }

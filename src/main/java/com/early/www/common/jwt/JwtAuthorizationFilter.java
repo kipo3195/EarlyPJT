@@ -92,6 +92,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter{
 			String jwtToken = jwtHeader.replace("Bearer ", "");
 			try {
 				 username = JWT.require(Algorithm.HMAC512("early")).build().verify(jwtToken).getClaim("username").asString();
+				 log.info("# doFilterInternal username : {}", username);
 			}catch(TokenExpiredException e) {
 				// access token 만료되었을때 
 				String nowDate = null;

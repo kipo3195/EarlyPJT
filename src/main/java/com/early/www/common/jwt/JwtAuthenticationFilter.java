@@ -6,6 +6,7 @@ import java.util.Date;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -155,7 +156,10 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 					.httpOnly(true)		// 브라우저에서 쿠키에 접근할 수 없도록 제한
 					.build();
 			response.setHeader("Set-Cookie", cookie.toString());
+			
 			// refresh token create end 
+			
+			System.out.println("####### principalDetails.getUsername() "+ principalDetails.getUsername()+" refreshToken : "+ cookie.toString());
 			
 			// refresh token DB insert 
 			refreshTokenDBinsert(nowDate, refreshToken, principalDetails.getUsername());
