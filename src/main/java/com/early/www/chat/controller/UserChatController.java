@@ -29,6 +29,7 @@ import com.early.www.chat.model.ChatRoom;
 import com.early.www.chat.service.ChatService;
 import com.early.www.user.model.EarlyUser;
 import com.early.www.util.CommonConst;
+import com.early.www.util.CommonRequestCheck;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -43,7 +44,10 @@ public class UserChatController {
 	@Autowired
 	ChatService chatService;
 	
-	// 라인키 발급 로직 
+	@Autowired
+	CommonRequestCheck commonRequestCheck;
+	
+	// 라인키 발급 로직 error check 하지않음 (빈번하게 발생함)
 	@GetMapping("/user/getLineKey")
 	public Map<String, String> getLineKey(HttpServletRequest request, HttpServletResponse response){
 		Map<String, String> resultMap = new HashMap<String, String>();
@@ -63,12 +67,11 @@ public class UserChatController {
 	// 채팅방 생성 
 	@PostMapping("/user/putChatRoom")
 	public Map<String, String> putChatRoom(HttpServletRequest request, HttpServletResponse response, @RequestBody ChatRoom chatroom){
-		
 		Map<String, String> resultMap = new HashMap<String, String>();
+	
+		boolean errorCheck = commonRequestCheck.errorCheck(request, response, chatroom);
 		
-		log.info("[{}], body : {}", request.getRequestURI(), chatroom);
-		String error = (String) response.getHeader("error_code");
-		if(error != null) {
+		if(errorCheck) {
 			resultMap.put("flag", "fail");
 			resultMap.put("error_code", response.getHeader("error_code"));
 		}else {
@@ -93,8 +96,9 @@ public class UserChatController {
 	public Map<String, String> getCreateChatRoomUsers(HttpServletRequest request, HttpServletResponse response, @RequestBody String sender){
 		Map<String, String> resultMap = new HashMap<String, String>();
 		
-		String error = (String) response.getHeader("error_code");
-		if(error != null) {
+		boolean errorCheck = commonRequestCheck.errorCheck(request, response, sender);
+		
+		if(errorCheck) {
 			resultMap.put("flag", "fail");
 			resultMap.put("error_code", response.getHeader("error_code"));
 		}else {
@@ -130,21 +134,20 @@ public class UserChatController {
 	
 	// 채팅방 참여자 조회 
 	@PostMapping("/user/getChatRoomUsers") // @requestBody는 한번의 request에 하나의 Object만 받을 수 있다. @RequestBody String A,  @RequestBody String B 안됨.
-	public Map<String, String> getChatRoomUsers(HttpServletRequest request, HttpServletResponse response, @RequestBody ChatRoomUserDTO chatRoomUserVO){
-		
-		
+	public Map<String, String> getChatRoomUsers(HttpServletRequest request, HttpServletResponse response, @RequestBody ChatRoomUserDTO chatRoomUserDto){
 		Map<String, String> resultMap = new HashMap<String, String>();
-		String error = (String) response.getHeader("error_code");
-		boolean result = false;
-		if(error != null) {
+		
+		boolean errorCheck = commonRequestCheck.errorCheck(request, response, chatRoomUserDto);
+		
+		if(errorCheck) {
 			resultMap.put("flag", "fail");
 			resultMap.put("error_code", response.getHeader("error_code"));
 		}else {
 			
-			if(chatRoomUserVO != null) {
+			if(chatRoomUserDto != null) {
 				
-				String chatRoomKey = chatRoomUserVO.getChatRoomKey();
-				int limitCnt = chatRoomUserVO.getLimitCnt();
+				String chatRoomKey = chatRoomUserDto.getChatRoomKey();
+				int limitCnt = chatRoomUserDto.getLimitCnt();
 				
 				if(chatRoomKey != null && !chatRoomKey.isEmpty()) {
 					List<EarlyUser> EarlyUserList = chatService.getChatRoomUsers(chatRoomKey, limitCnt);
@@ -174,10 +177,7 @@ public class UserChatController {
 			}else {
 				resultMap.put("result", "error");
 			}
-			
 		}
-		
-		
 		
 		return resultMap;
 		
@@ -242,7 +242,6 @@ public class UserChatController {
 					// 웹소켓으로 pub
 					String dest = "/topic/room/"+chatLineEventVO.getRoomKey();
 					simpMessagingTemplate.convertAndSend(dest, resultJson.toJSONString());
-					
 				}
 			}
 			
@@ -268,64 +267,65 @@ public class UserChatController {
     // /user/readLines의 response를 통해 채팅 전체 건수, 해당 채팅방의 건수를 전달 (resultMap)
     // 웹소켓을 통해 해당 채팅방을 구독하는 모든 사용자에게 읽음 처리된 라인을 라인:건수의 형식으로 publish 하여 처리.(socketJson)
 	@PostMapping("/user/readLines")
-	public Map<String, String> readLines(HttpServletRequest request, HttpServletResponse response, @RequestBody ChatReadDTO chatReadVO){
-		Map<String, String> resultMap = new HashMap<String, String>();
-		String error = (String) response.getHeader("error_code");
-		if(error != null) {
-			resultMap.put("flag", "fail");
-			resultMap.put("error_code", response.getHeader("error_code"));
+	public JSONObject readLines(HttpServletRequest request, HttpServletResponse response, @RequestBody ChatReadDTO chatReadDto){
+		JSONObject resultJson = new JSONObject();
+		
+		boolean errorCheck = commonRequestCheck.errorCheck(request, response, chatReadDto);
+		
+		if(errorCheck) {
+			resultJson.put(CommonConst.RESPONSE_TYPE, CommonConst.RESPONSE_TYPE_FAIL);
+			resultJson.put(CommonConst.RESPONSE_DATA_ERROR_MSG, response.getHeader("error_code"));
 		}else {
 			
 			String username = (String) request.getAttribute("username");
-			
-			//Map<String, Object> unreadJson = chatService.getReadSuccessLines(chatReadVO.getChatRoomKey(), username, chatReadVO.getRecvLine());
-			Map<String, Object> unreadJson = chatService.putChatUnreadLines(chatReadVO.getChatRoomKey(), username, simpMessagingTemplate);
-			// return 하면 이벤트 수신 요청자 (수신자) 처리
-			
-			if(unreadJson != null && !unreadJson.isEmpty()) {
+			if(username != null && !username.isEmpty()) {
 				
-				String type = (String) unreadJson.get("type");
-				String chat = (String) unreadJson.get("chat");
-				String room = (String) unreadJson.get("room");
-				//JSONObject result = (JSONObject) unreadJson.get("result");
-
-				// 유효성 검사 체크 로직 추가 할 것 TODO
-				
-				/* linekey:count는 웹 소켓으로 전달 */
-				// 보낼 경로 설정
-				//String dest = "/topic/room/"+chatReadVO.getChatRoomKey();
-				// 발송
-//				if(result != null && !result.isEmpty()) {
-//					JSONObject socketJson = new JSONObject();
-//					socketJson.put("result", result);
-//					socketJson.put("type", "readLines");
-//					simpMessagingTemplate.convertAndSend(dest, socketJson.toJSONString());
-//				}
-				
-				/* 전체건수, 채팅방 건수는 response로 전달 */
-				resultMap.put("type", type);
-				resultMap.put("chat", chat);
-				resultMap.put("room", room);
-				
-				return resultMap;
+				if(chatReadDto.getUserId() != null && username.equals(chatReadDto.getUserId())) {
+					
+					Map<String, Object> unreadJson = chatService.putChatUnreadLines(chatReadDto.getChatRoomKey(), username, simpMessagingTemplate);
+					// return 하면 이벤트 수신 요청자 (수신자) 처리
+					
+					if(unreadJson != null && !unreadJson.isEmpty()) {
+						/* 전체건수, 채팅방 건수는 response로 전달 */
+						JSONObject data = new JSONObject();
+						data.put("count_type", (String) unreadJson.get("type"));
+						data.put("chat", (String) unreadJson.get("chat"));
+						data.put("room", (String) unreadJson.get("room"));
+						
+						resultJson.put(CommonConst.RESPONSE_TYPE, CommonConst.RESPONSE_TYPE_SUCCESS);
+						resultJson.put(CommonConst.RESPONSE_DATA, data);
+						
+					}else {
+						resultJson.put(CommonConst.RESPONSE_TYPE, CommonConst.RESPONSE_TYPE_FAIL);
+						resultJson.put(CommonConst.RESPONSE_DATA_ERROR_MSG, response.getHeader("error_code"));
+					}
+				}else {
+					resultJson.put(CommonConst.RESPONSE_TYPE, CommonConst.RESPONSE_TYPE_FAIL);
+					resultJson.put(CommonConst.RESPONSE_DATA_ERROR_MSG, CommonConst.INVALID_BODY_DATA);
+				}
 			}else {
-				resultMap.put("flag", "fail");
-				resultMap.put("error_code", response.getHeader("error_code"));
+				resultJson.put(CommonConst.RESPONSE_TYPE, CommonConst.RESPONSE_TYPE_FAIL);
+				resultJson.put(CommonConst.RESPONSE_DATA_ERROR_MSG, CommonConst.INVALID_TOKEN_DATA);
 			}
 		}
-		return resultMap;
+		
+		log.info("[{}] response, body : {}", request.getRequestURI(), resultJson);
+		return resultJson;
 	}
 	
-	// 채팅방 리스트 조회 
+	// 채팅방 리스트 조회 -> TODO 추후 Ealry가 아닌 DTO로 변경.. 사용자 ID와 chat type만 받으면 될듯. 
 	@PostMapping("/user/chatList")
-	public Map<String, String> chatList(HttpServletRequest request, HttpServletResponse response, @RequestBody EarlyUser earlyUser){
-		log.info("[/user/chatList] user info : {}", earlyUser);
-		Map<String, String> resultMap = new HashMap<String, String>();
+	public JSONObject chatList(HttpServletRequest request, HttpServletResponse response, @RequestBody EarlyUser earlyUser){
+		JSONObject resultJson = new JSONObject();
+		JSONObject data = new JSONObject();
 		
-		String error = (String) response.getHeader("error_code");
-		if(error != null) {
-			resultMap.put("flag", "fail");
-			resultMap.put("error_code", response.getHeader("error_code"));
+		boolean errorCheck = commonRequestCheck.errorCheck(request, response, earlyUser);
+		
+		if(errorCheck) {
+			
+			resultJson.put(CommonConst.RESPONSE_TYPE, CommonConst.RESPONSE_TYPE_FAIL);
+			resultJson.put(CommonConst.RESPONSE_DATA_ERROR_MSG, response.getHeader("error_code"));
+		
 		}else {
 			
 			String username = (String) request.getAttribute("username");
@@ -334,6 +334,7 @@ public class UserChatController {
 			if(username != null && !username.isEmpty() && earlyUser != null && username.equals(earlyUser.getUsername())) {
 				// 읽지않은 건수 함께 조회
 				List<ChatRoom> chatList = chatService.getMyChatList(username);
+				
 				if(chatList != null && !chatList.isEmpty()) {
 					
 					ObjectMapper mapper = new ObjectMapper();
@@ -353,18 +354,25 @@ public class UserChatController {
 						}
 					}
 					
-					resultMap.put("chat_list", list.toString());
+					resultJson.put(CommonConst.RESPONSE_TYPE, CommonConst.RESPONSE_TYPE_SUCCESS);
+					
+					data.put("chat_list", list.toString());
+					resultJson.put(CommonConst.RESPONSE_DATA, data);
+				
 				}else {
-					// 채팅리스트가 없음 
-					resultMap.put("chat_list", "C404");
+					// 채팅리스트가 없음
+					resultJson.put(CommonConst.RESPONSE_TYPE, CommonConst.RESPONSE_TYPE_SUCCESS);
+					
+					data.put("chat_list", "empty");
+					resultJson.put(CommonConst.RESPONSE_DATA, data);
 				}
 			}else {
-				log.info("[/user/chatList] token id and request id do not match ! token id : {}, request id : {}", username, earlyUser.getUsername() );	
-				resultMap.put("chat_list", "C403");
+				resultJson.put(CommonConst.RESPONSE_TYPE, CommonConst.RESPONSE_TYPE_FAIL);
+				resultJson.put(CommonConst.RESPONSE_DATA_ERROR_MSG, CommonConst.INVALID_TOKEN_DATA);
 			}
 		}
 		
-		return resultMap;
+		return resultJson;
 	}
 	
 
@@ -382,7 +390,6 @@ public class UserChatController {
 			log.info("[/user/chat] check ChatMain : {}", main);
 			return;
 		}
-	
 		
 		/* 검증된 데이터 */ 
 		String roomKey = main.getChatRoomKey();
@@ -421,7 +428,6 @@ public class UserChatController {
 		// 발송 - chatData + 라인의 미확인 건수
 		System.out.println("채팅 발송 dest : "+dest);
 		simpMessagingTemplate.convertAndSend(dest, sendData.toJSONString());
-
 		
 		/* redis 수신자 별 라인 저장 -> 수신자의 채팅방 미확인 건수 저장 -> 수신자의 전체 채팅 미확인 건수 저장 및 전체 건수 조회*/ 
 		Map<String, JSONObject> unreadMap = chatService.getUnreadChatCount(roomKey, receiver, sender, lineKey);
@@ -443,11 +449,9 @@ public class UserChatController {
 		//수신자 ID 파싱
 		//String recvIds[] = receiver.split("[|]");
 		
-		
 		// STOMP를 통한 데이터 전송
 		//for(int i = 0; i< recvIds.length; i++) {
 
-		
 //			String dest = "/topic/room/"+roomKey;
 //
 //			simpMessagingTemplate.convertAndSend(dest, chatData.toJSONString());
@@ -460,54 +464,18 @@ public class UserChatController {
 		//}
 			
 	}
-	// 주소록에서 방 조회시 
-	@PostMapping("/user/getAddrChatInfo")
-	public JSONObject getAddrChatLine (HttpServletRequest request, @RequestBody ChatRoom chatRoom, HttpServletResponse response) {
-		JSONObject resultJson = new JSONObject();
-		
-		log.info("[{}], body : {}", request.getRequestURI(), chatRoom);
-		String error = (String) response.getHeader("error_code");
-		
-		if(error != null) {
-			JSONObject type = new JSONObject();
-			type.put("result", "fail");
-			
-			JSONObject data = new JSONObject();
-			data.put("error_msg", response.getHeader("error_code"));
-			
-			resultJson.put("type", type);
-			resultJson.put("data", data);
-			
-			log.info("[{}]", request.getRequestURI(), resultJson);
-		}else {
-			
-			String username = (String) request.getAttribute("username");
-			
-			if(username != null) {
-				resultJson = chatService.getAddrChatLine(chatRoom, username, simpMessagingTemplate);
-			}else {
-				System.out.println("주소록 방 조회 에러.. username : "+ username);
-			}
-		}
-		
-		return resultJson;
-	}
-	
-	// 20240510 기준 방입장 API 주소록에서 방 조회시 
+
+	// 방 입장, 더 불러오기 API
 	@PostMapping("/user/getChatLines")
 	public JSONObject getChatLines (HttpServletRequest request, @RequestBody ChatLineDTO chatLineDTO, HttpServletResponse response) {
 		JSONObject resultJson = new JSONObject();
 		
-		log.info("[{}] request, body : {}", request.getRequestURI(), chatLineDTO);
-		String error = (String) response.getHeader("error_code");
+		boolean errorCheck = commonRequestCheck.errorCheck(request, response, chatLineDTO);
 		
-		if(error != null || chatLineDTO == null) {
+		if(errorCheck) {
 			
-			JSONObject data = new JSONObject();
-			data.put(CommonConst.RESPONSE_DATA_ERROR_MSG, response.getHeader("error_code"));
-			
-			resultJson.put("type", CommonConst.RESPONSE_TYPE_FAIL);
-			resultJson.put("data", data);
+			resultJson.put(CommonConst.RESPONSE_TYPE, CommonConst.RESPONSE_TYPE_FAIL);
+			resultJson.put(CommonConst.RESPONSE_DATA_ERROR_MSG, response.getHeader("error_code"));
 			
 		}else {
 			// 토큰에 있는 사용자 ID
@@ -526,157 +494,7 @@ public class UserChatController {
 		log.info("[{}] response, body : {}", request.getRequestURI(), resultJson);
 		return resultJson;
 	}
-	
-	// 채팅방의 라인 조회 (방 입장)
-	@PostMapping("/user/chatRoomLine")										// body 데이터
-	public Map<String, String> getChatRoomLine(HttpServletRequest request, @RequestBody ChatRoom chatRoom, HttpServletResponse response) {
-		Map<String, String> resultMap = new HashMap<String, String>();
-		
-		String error = (String) response.getHeader("error_code");
-		if(error != null) {
-			resultMap.put("flag", "fail");
-			resultMap.put("error_code", response.getHeader("error_code"));
-		}else {
-			
-			// 토큰에서 가져온 데이터
-			String username = (String) request.getAttribute("username");
-			
-			if(username != null && !username.isEmpty()) {
-				
-				String chatRoomKey = chatRoom.getChatRoomKey();
-				
-				log.info("[/user/chatRoomLine] user id : {}, room key : {}", username, chatRoomKey);
-				
-				if(!StringUtils.isEmpty(chatRoomKey)) { 
-					
-//					/* 입장한 채팅방 읽음처리  "0" -> 모두 읽음 처리 하겠다. */
-//					Map<String, Object> unreadJson = chatService.getReadSuccessLines(chatRoomKey, username, "0");
-//					// 미확인 건수 갱신 & 전달(웹소켓)
-//					if(unreadJson != null && !unreadJson.isEmpty()) {
-//						
-//						String type = (String) unreadJson.get("type");
-//						String chat = (String) unreadJson.get("chat");
-//						String room = (String) unreadJson.get("room");
-//						
-//						// 내가 방에 입장하므로써 읽은 라인 : 건수 데이터를 해당 방을 구독하고 있는 사용자에게 전달
-//						JSONObject result = (JSONObject) unreadJson.get("result");
-//
-//						// 유효성 검사 체크 로직 추가 할 것 TODO
-//						
-//						/* linekey:count는 웹 소켓으로 전달 */
-//						// 보낼 경로 설정
-//						String dest = "/topic/room/"+chatRoomKey;
-//						// 발송
-//						if(result != null && !result.isEmpty()) {
-//							JSONObject socketJson = new JSONObject();
-//							socketJson.put("result", result);
-//							socketJson.put("type", "readLines");
-//							simpMessagingTemplate.convertAndSend(dest, socketJson.toJSONString());
-//						}
-//						
-//					}else {}
-//					
-//					/* 라인 리스트 조회 */
-//					List<ChatMain> lineList = chatService.getChatRoomLine(chatRoomKey);
-//					if(lineList != null && !lineList.isEmpty()) {
-//						ObjectMapper mapper = new ObjectMapper();
-//						
-//						List<String> list = new ArrayList<String>();
-//						
-//						// 객체를 json형태의 String으로 변환 
-//						for(int i = 0; i < lineList.size(); i++) {
-//							ChatMain chatMain = lineList.get(i);
-//							try {
-//								list.add(mapper.writeValueAsString(chatMain));
-//							} catch (JsonProcessingException e) {
-//								e.printStackTrace();
-//							}
-//						}
-//						
-//						resultMap.put("chatRoomLine", list.toString());
-//						// 다음 요청의 기준이되는 라인키 생성
-//						if(list.size() > 0) {
-//							resultMap.put("nextLine", lineList.get(0).getChatLineKey());
-//						}else {
-//							resultMap.put("nextLine", "0");
-//						}
-//					}
-				}
-			}else {
-				// 토큰은 검증했지만 username이 없는경우?
-				
-			}
-		}
-		
-		return resultMap;
-	}
-	
-	
-		// 채팅방의 라인 추가조회
-		@PostMapping("/user/chatRoomLineAppend")										// body 데이터
-		public Map<String, String> getChatRoomLineAppend(HttpServletRequest request, @RequestBody ChatRoom chatRoom, HttpServletResponse response) {
-			Map<String, String> resultMap = new HashMap<String, String>();
-			
-			String error = (String) response.getHeader("error_code");
-			if(error != null) {
-				resultMap.put("flag", "fail");
-				resultMap.put("error_code", response.getHeader("error_code"));
-			}else {
-				// 토큰에서 가져온 데이터
-				String username = (String) request.getAttribute("username");
-				
-				if(username != null && !username.isEmpty()) {
-					
-					String chatRoomKey = chatRoom.getChatRoomKey();
-					String nextLine = chatRoom.getLastLineKey();
-					
-					if(!StringUtils.isEmpty(chatRoomKey)) { 
-						
-						List<ChatMain> lineList = chatService.getChatRoomLineAppend(chatRoomKey, nextLine);
-						
-						if(lineList != null && !lineList.isEmpty()) {
-							ObjectMapper mapper = new ObjectMapper();
-							
-							List<String> list = new ArrayList<String>();
-							
-							// chatList 만들때 ChatMain 객체에 읽지않은 건수 추가 TODO
-							
-							// 객체를 json형태의 String으로 변환 
-							for(int i = 0; i < lineList.size(); i++) {
-								ChatMain chatMain = lineList.get(i);
-								
-								try {
-									list.add(mapper.writeValueAsString(chatMain));
-								} catch (JsonProcessingException e) {
-									e.printStackTrace();
-								}
-							}
-							
-							resultMap.put("chatRoomLine", list.toString());
-							
-							// 다음 요청의 기준이되는 라인키 생성
-							if(list.size() > 0) {
-								resultMap.put("nextLine", lineList.get(0).getChatLineKey());
-							}else {
-								resultMap.put("nextLine", "0");
-							}
-							
-						}
-						
-					}
-				}else {
-					
-				}
-			}
-			
-			
-			return resultMap;
-		}
-		
 
-		
-		
-	
 }
 
 

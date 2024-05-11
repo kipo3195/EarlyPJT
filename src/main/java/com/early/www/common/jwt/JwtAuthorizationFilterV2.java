@@ -93,7 +93,7 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 			
 			// jwt header에 넘어온 token을 통해서 정상적인 사용자인지 체킹
 			String jwtToken = jwtHeader.replace("Bearer ", "");
-			System.out.println();
+			//System.out.println();
 			//System.out.println("토큰 검증 로직에서 jwtToken : " + jwtToken);
 			try {
 				

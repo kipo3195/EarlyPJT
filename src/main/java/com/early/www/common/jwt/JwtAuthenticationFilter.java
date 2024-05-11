@@ -159,7 +159,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 			
 			// refresh token create end 
 			
-			System.out.println("####### principalDetails.getUsername() "+ principalDetails.getUsername()+" refreshToken : "+ cookie.toString());
+			//System.out.println("####### principalDetails.getUsername() "+ principalDetails.getUsername()+" refreshToken : "+ cookie.toString());
 			
 			// refresh token DB insert 
 			refreshTokenDBinsert(nowDate, refreshToken, principalDetails.getUsername());

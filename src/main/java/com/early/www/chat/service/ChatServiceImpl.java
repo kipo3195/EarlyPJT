@@ -179,59 +179,6 @@ public class ChatServiceImpl implements ChatService {
 		return chatMainList;
 	}
 
-	// 채팅방 데이터 조회 (최초 이후)
-	@Override
-	public List<ChatMain> getChatRoomLineAppend(String chatRoomKey, String lineKey) {
-		// 라인의 미확인 건수 추가
-		List<ChatMain> chatMainList = chatMainRepository.findByChatRoomKeyAndLineKey(chatRoomKey, lineKey);
-	
-		RedisSerializer keySerializer = redisTemplate.getKeySerializer();
-		RedisSerializer hashKeySerializer = redisTemplate.getHashKeySerializer();
-		RedisSerializer hashValueSerializer = redisTemplate.getHashValueSerializer();
-		redisTemplate.execute(new RedisCallback<Object>() {
-
-			@Override
-			public Object doInRedis(RedisConnection connection) throws DataAccessException {
-				
-				// 라인의 미확인 건수 추가
-				for(int i = 0; i < chatMainList.size(); i++) {
-					String key = "unreadLineUsers:"+chatRoomKey+":"+chatMainList.get(i).getChatLineKey();
-					Long unreadCount = connection.sCard(keySerializer.serialize(key));
-					chatMainList.get(i).setChatUnreadCount(String.valueOf(unreadCount));
-					
-					key = "allChatEvent:"+chatRoomKey+":"+chatMainList.get(i).getChatLineKey();
-					Map<byte[], byte[]> allChatEvent = connection.hGetAll(hashKeySerializer.serialize(key));
-					
-					Iterator<byte[]> chatEvent = allChatEvent.keySet().iterator();
-
-					// 클라이언트에서 없으면 null임 
-					while(chatEvent.hasNext()) {
-						// 채팅 라인에 대한 이벤트 추가 
-						byte[] event = chatEvent.next();
-						String eventKey = (String) hashKeySerializer.deserialize(event);
-						String value = (String) hashValueSerializer.deserialize(allChatEvent.get(event));
-						if(eventKey.equals(CommonConst.ChatLineEventCheck)) {
-							chatMainList.get(i).setChatCheckCnt(value);
-						}else if(eventKey.equals(CommonConst.ChatLineEventGood)) {
-							chatMainList.get(i).setChatGoodCnt(value);
-						}else if(eventKey.equals(CommonConst.ChatLineEventLike)) {
-							chatMainList.get(i).setChatLikeCnt(value);
-						}
-					}
-					
-				}
-				
-				if(connection != null) {
-					connection.close();
-				}
-				return null;
-			}
-			
-		});
-		
-		return chatMainList;
-	}
-
 
 	// 채팅 발송시 unreadcount 전달 
 	@Override
@@ -460,7 +407,7 @@ public class ChatServiceImpl implements ChatService {
 				
 				Set<byte[]> myUnreadLineSet = connection.zRangeByScore(keySerializer.serialize(key), startLine, 99999999999999999L);
 
-				System.out.println("신규로 읽는 라인의 숫자 : "+ myUnreadLineSet.size());
+				// System.out.println("신규로 읽는 라인의 숫자 : "+ myUnreadLineSet.size());
 				Object[] arr = myUnreadLineSet.toArray();
 				for(int i = 0; i < arr.length; i++) {
 					
@@ -675,98 +622,6 @@ public class ChatServiceImpl implements ChatService {
 		
 	}
 
-
-	@Override
-	public JSONObject getAddrChatLine(ChatRoom dto, String username, SimpMessagingTemplate simpMessagingTemplate) {
-		JSONObject jsonObj = new JSONObject();
-		JSONObject type = new JSONObject();
-		JSONObject data = new JSONObject();
-		
-		ChatRoom chatRoom = null;
-		// chatRoom이 존재하는지 체크 
-		if(dto != null) {
-			
-			if(dto.getChatRoomKey() != null) {
-				
-				chatRoom = chatRoomRepository.findByRoomKey(dto.getChatRoomKey());
-				
-				// 방 생성
-				if(chatRoom != null) {
-//					// 읽음처리 - redis
-//					Map<String, Object> unreadJson = getReadSuccessLines(chatRoom.getChatRoomKey(), username, "0");
-//					// 미확인 건수 갱신 & 전달(웹소켓)
-//					if(unreadJson != null && !unreadJson.isEmpty()) {
-//						
-//						JSONObject result = (JSONObject) unreadJson.get("result");
-//
-//						// 유효성 검사 체크 로직 추가 할 것 TODO
-//						
-//						/* linekey:count는 웹 소켓으로 전달 */
-//						// 보낼 경로 설정
-//						String dest = "/topic/room/"+chatRoom.getChatRoomKey();
-//						// 발송
-//						if(result != null && !result.isEmpty()) {
-//							JSONObject socketJson = new JSONObject();
-//							socketJson.put("result", result);
-//							socketJson.put("type", "readLines");
-//							simpMessagingTemplate.convertAndSend(dest, socketJson.toJSONString());
-//						}
-//						
-//						
-//						/* 라인 리스트 조회 */
-//						List<ChatMain> lineList = getChatRoomLine(chatRoom.getChatRoomKey());
-//						if(lineList != null && !lineList.isEmpty()) {
-//							ObjectMapper mapper = new ObjectMapper();
-//							
-//							List<String> list = new ArrayList<String>();
-//							
-//							// 객체를 json형태의 String으로 변환 
-//							for(int i = 0; i < lineList.size(); i++) {
-//								ChatMain chatMain = lineList.get(i);
-//								
-//								try {
-//									list.add(mapper.writeValueAsString(chatMain));
-//								} catch (JsonProcessingException e) {
-//									e.printStackTrace();
-//								}
-//							}
-//							
-//							data.put("chatRoomLine", list.toString());
-//							data.put("title", chatRoom.getChatRoomTitle());
-//							data.put("chatRoomKey", chatRoom.getChatRoomKey());
-//							
-//							// 다음 요청의 기준이되는 라인키 생성
-//							if(list.size() > 0) {
-//								data.put("nextLine", lineList.get(0).getChatLineKey());
-//							}else {
-//								data.put("nextLine", "0");
-//							}
-//						}
-//						
-//					}
-//					
-				}else {
-					// 생성되기 전에는 room_key를 다시 내려줌 
-					data.put("newChatRoomKey", dto.getChatRoomKey());
-				}
-				type.put("result", "success");
-			}else {
-				//error
-				type.put("result", "fail");
-				data.put("error_msg", "data_invalid");
-			}
-		}else {
-			//error
-			type.put("result", "fail");
-			data.put("error_msg", "body_data_invalid");
-		}
-		
-		jsonObj.put("type", type);
-		jsonObj.put("data", data);
-		
-		return jsonObj;
-	}
-	
 	
 	@Override
 	public JSONObject getChatLines(ChatLineDTO dto, SimpMessagingTemplate simpMessagingTemplate) {

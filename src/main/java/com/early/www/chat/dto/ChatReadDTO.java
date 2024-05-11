@@ -6,6 +6,6 @@ import lombok.Data;
 public class ChatReadDTO {
 	
 	private String chatRoomKey;
-	private String recvLine;
+	private String userId;
 
 }
