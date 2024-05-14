@@ -330,4 +330,6 @@
 		- CommonRequestCheck의 errorCheck 메소드
 	2. 채팅방 읽음처리, 리스트 조회 API 정리 
 		
+2024.05.14
+	1. 채팅방 참여자 조회 /user/getRecvUser API 생성
 				

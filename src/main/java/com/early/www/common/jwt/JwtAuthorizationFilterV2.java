@@ -90,23 +90,21 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 				chain.doFilter(request, response);
 				return;
 			}
-			
 			// jwt header에 넘어온 token을 통해서 정상적인 사용자인지 체킹
 			String jwtToken = jwtHeader.replace("Bearer ", "");
-			//System.out.println();
-			//System.out.println("토큰 검증 로직에서 jwtToken : " + jwtToken);
+			
 			try {
-				
+				// com.auth0.jwt.exceptions.JWTDecodeException: The token was expected to have 3 parts, but got 1.
+				// 로컬환경에서 서버 수정이 실시간으로 반영될때 리액트에서 accessToken으로 요청하면 accessToken이 null인 경우가 가끔 생긴다.
+				// null인 경우를 체크해 refresh 토큰으로 재 검증하는 절차를 넣는다면 개선 할 수 있을 것이라고 판단된다. 
 				 username = JWT.require(Algorithm.HMAC512("early")).build().verify(jwtToken).getClaim("username").asString();
-				 //System.out.println("토큰 검증 로직에서 username : " + username);
-				 
 			}catch(TokenExpiredException e) {
 				// access token 만료 -> 무조건 로그아웃 처리 
-				log.info("[{}] TokenExpiredException !", requestUrl);
+				log.info("[{}] TokenExpiredException! username : {}", requestUrl, username);
 				response.addHeader("error_code", "400");
 				chain.doFilter(request, response);
-				return;
 				
+				return;
 			}
 			
 			// 서명이 정상적

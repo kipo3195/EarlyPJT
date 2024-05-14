@@ -8,6 +8,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import com.early.www.chat.dto.ChatLineDTO;
 import com.early.www.chat.dto.ChatLineEventDTO;
+import com.early.www.chat.dto.ChatRoomRecvDTO;
 import com.early.www.chat.model.ChatMain;
 import com.early.www.chat.model.ChatRoom;
 import com.early.www.user.model.EarlyUser;
@@ -43,6 +44,8 @@ public interface ChatService {
 	public String putChatRoom(ChatRoom chatroom);
 
 	public JSONObject getChatLines(ChatLineDTO chatLineDTO, SimpMessagingTemplate simpMessagingTemplate);
+
+	public JSONObject getRecvUser(ChatRoomRecvDTO chatRoomRecvDTO);
 	
 	
 	

@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.early.www.chat.dto.ChatLineDTO;
 import com.early.www.chat.dto.ChatLineEventDTO;
 import com.early.www.chat.dto.ChatReadDTO;
+import com.early.www.chat.dto.ChatRoomRecvDTO;
 import com.early.www.chat.dto.ChatRoomUserDTO;
 import com.early.www.chat.model.ChatMain;
 import com.early.www.chat.model.ChatRoom;
@@ -51,7 +52,6 @@ public class UserChatController {
 	@GetMapping("/user/getLineKey")
 	public Map<String, String> getLineKey(HttpServletRequest request, HttpServletResponse response){
 		Map<String, String> resultMap = new HashMap<String, String>();
-		
 		String error = (String) response.getHeader("error_code");
 		if(error != null) {
 			resultMap.put("flag", "fail");
@@ -125,9 +125,7 @@ public class UserChatController {
 				resultMap.put("result", "error");
 				return resultMap;
 			}
-			
 		}
-		
 		return resultMap;
 		
 	}
@@ -494,6 +492,40 @@ public class UserChatController {
 		log.info("[{}] response, body : {}", request.getRequestURI(), resultJson);
 		return resultJson;
 	}
+	
+	
+	// 방 입장, 더 불러오기 API
+		@PostMapping("/user/getRecvUser")
+		public JSONObject getRecvUser (HttpServletRequest request, @RequestBody ChatRoomRecvDTO chatRoomRecvDTO, HttpServletResponse response) {
+			JSONObject resultJson = new JSONObject();
+			
+			boolean errorCheck = commonRequestCheck.errorCheck(request, response, chatRoomRecvDTO);
+			
+			if(errorCheck) {
+				
+				resultJson.put(CommonConst.RESPONSE_TYPE, CommonConst.RESPONSE_TYPE_FAIL);
+				resultJson.put(CommonConst.RESPONSE_DATA_ERROR_MSG, response.getHeader("error_code"));
+				
+			}else {
+				// 토큰에 있는 사용자 ID
+				String username = (String) request.getAttribute("username");
+				
+				if(username != null && chatRoomRecvDTO.getUserId() != null && username.equals(chatRoomRecvDTO.getUserId())) {
+					resultJson = chatService.getRecvUser(chatRoomRecvDTO);
+				}else {
+					JSONObject data = new JSONObject();
+					data.put(CommonConst.RESPONSE_DATA_ERROR_MSG, CommonConst.INVALID_USER_ID);
+					
+					resultJson.put("type", CommonConst.RESPONSE_TYPE_FAIL);
+					resultJson.put("data", data);
+				}
+			}
+			log.info("[{}] response, body : {}", request.getRequestURI(), resultJson);
+			return resultJson;
+		}
+	
+	
+	
 
 }
 

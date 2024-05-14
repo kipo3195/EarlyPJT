@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import com.early.www.chat.dto.ChatLineDTO;
 import com.early.www.chat.dto.ChatLineEventDTO;
+import com.early.www.chat.dto.ChatRoomRecvDTO;
 import com.early.www.chat.model.ChatList;
 import com.early.www.chat.model.ChatMain;
 import com.early.www.chat.model.ChatRoom;
@@ -683,6 +684,34 @@ public class ChatServiceImpl implements ChatService {
 		
 		resultJson.put("type", CommonConst.RESPONSE_TYPE_SUCCESS);
 		resultJson.put("data", data);
+		
+		return resultJson;
+	}
+
+
+	@Override
+	public JSONObject getRecvUser(ChatRoomRecvDTO dto) {
+		JSONObject resultJson = new JSONObject();
+		JSONObject data = new JSONObject();
+		
+		String roomKey = dto.getRoomKey();
+		String userId = dto.getUserId();
+		
+		if(roomKey != null && !roomKey.isEmpty()) {
+			
+			List<EarlyUser> recvUser = earlyUserRepository.findByRoomKeyAndUser(roomKey, userId);
+			if(recvUser != null && recvUser.size() > 0) {
+				data.put("recv_user", recvUser);
+			}else {
+				data.put("recv_user", "");
+			}
+			resultJson.put(CommonConst.RESPONSE_DATA, data);
+			resultJson.put("type", CommonConst.RESPONSE_TYPE_SUCCESS);
+		}else {
+			data.put(CommonConst.RESPONSE_DATA_ERROR_MSG, CommonConst.INVALID_BODY_DATA);
+			resultJson.put("type", CommonConst.RESPONSE_TYPE_FAIL);
+			resultJson.put(CommonConst.RESPONSE_DATA, data);
+		}
 		
 		return resultJson;
 	}
