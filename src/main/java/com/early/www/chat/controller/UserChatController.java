@@ -380,7 +380,6 @@ public class UserChatController {
 	@MessageMapping("/user/chat")
 	public void handle(ChatMain main) {
 	
-		
 		/* 데이터 검증 */
 		if(main == null 
 		   || StringUtils.isEmpty(main.getChatReceiver()) || StringUtils.isEmpty(main.getChatRoomKey()) || StringUtils.isEmpty(main.getChatSender())
@@ -407,7 +406,6 @@ public class UserChatController {
 		// TODO 채팅 내용 암호화 및 QueueThread 방식으로 전환 */ 
 		chatService.putChatMain(main); 
 		
-		
 		/* redis 해당 라인의 읽지 않은 사용자 저장 및 조회 */
 		String unreadCount = chatService.getUnreadLineCount(roomKey, lineKey, receiver, sender);
 		
@@ -422,7 +420,7 @@ public class UserChatController {
 		
 		// 보낼 경로 설정
 		String dest = "/topic/room/"+roomKey;
-
+		
 		// 발송 - chatData + 라인의 미확인 건수
 		System.out.println("채팅 발송 dest : "+dest);
 		simpMessagingTemplate.convertAndSend(dest, sendData.toJSONString());

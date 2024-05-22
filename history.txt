@@ -333,3 +333,8 @@
 2024.05.14
 	1. 채팅방 참여자 조회 /user/getRecvUser API 생성
 				
+
+2024.05.22
+	1. 파일 업로드 API 추가 /file/upload
+	
+				

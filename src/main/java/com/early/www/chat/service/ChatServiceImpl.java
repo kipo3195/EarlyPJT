@@ -111,6 +111,8 @@ public class ChatServiceImpl implements ChatService {
 	public void putChatMain(ChatMain main) {
 		//String lineKey = makeLineKey();
 		
+		// Queue thread 
+		
 		main.setChatLineKey(main.getChatLineKey());
 		main.setSendDate(main.getChatLineKey());
 		main.setChatDelFlag("N");
