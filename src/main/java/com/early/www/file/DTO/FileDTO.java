@@ -10,5 +10,6 @@ public class FileDTO {
 	MultipartFile fileData;
 	private String senderId;
 	private String fileHash;
+	private String fileType;
 	
 }

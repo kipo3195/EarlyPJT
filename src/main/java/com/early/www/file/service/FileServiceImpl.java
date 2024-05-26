@@ -2,17 +2,24 @@ package com.early.www.file.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Blob;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import javax.sql.rowset.serial.SerialBlob;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.early.www.file.DTO.FileDTO;
 import com.early.www.file.model.FileEntity;
+import com.early.www.properties.DeploymentProperties;
 import com.early.www.repository.FileRepository;
+import com.early.www.util.CommonConst;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,6 +29,9 @@ public class FileServiceImpl implements FileService {
 	
 	@Autowired
 	FileRepository fileRepository;
+	
+	@Autowired
+	DeploymentProperties deploymentProperties;
 	
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 	
@@ -41,7 +51,9 @@ public class FileServiceImpl implements FileService {
 	    String projectPath = projectDir.getAbsolutePath();
 	    String yyyyMMdd = yyyymmdd();
 	    
-	    MakeString makePath = () -> projectPath+"/"+yyyyMMdd;
+	    String commonPath = CommonConst.LOCAL_SERVER_RESOURCE_PATH;
+	    
+	    MakeString makePath = () -> projectPath + commonPath + yyyyMMdd;
 	    
 	    // 날짜 경로 생성 체크
 	    boolean makeDirFlag = createDirectoryIfNotExists(makePath.execute());
@@ -51,14 +63,18 @@ public class FileServiceImpl implements FileService {
 	    if(makeDirFlag) {
     	    try {
     	    	String contentType = file.getContentType();
+    	    	
     	    	if(contentType.startsWith("image")) {
     	    		contentType = "jpg";
     	    	}
-    	    	MakeString makeNewFileName = () -> "Early_"+yyyyMMdd+"_"+dto.getFileHash();
+    	    	
+    	    	MakeString makeNewFileName = () -> new StringBuffer().append(CommonConst.PROJECT_KEYWORD).append(CommonConst.UNDER_BAR)
+    	    			.append(yyyyMMdd).append(CommonConst.UNDER_BAR).append(dto.getFileHash()).toString();
     	    	
     	    	newFileName = makeNewFileName.execute()+"."+contentType;
     	    	
-    	    	tempFile = new File(projectPath+"/"+yyyyMMdd+"/"+newFileName);
+    	    	tempFile = new File(makePath.execute()+"/"+newFileName);
+    	    	
 		    	// 파일을 주어진 목적지 파일로 이동시키는 메서드를 통해 파일 업로드.
 				file.transferTo(tempFile);
 			} catch (IllegalStateException | IOException e) {
@@ -79,6 +95,12 @@ public class FileServiceImpl implements FileService {
 	    	temp.setFileUploadDate(new Date());
 	    	temp.setFileHash(dto.getFileHash());
 	    	temp.setFileDir(tempFile.getPath());
+	    	
+	    	if(deploymentProperties.getType().equals("local")){
+	    		temp.setFileUrl("http://localhost:8080/"+yyyyMMdd+"/"+newFileName);
+	    	}else {
+	    		// 서버 방식일때 url 변경해야함. 배포 후 정리
+	    	}
 	    	
 	    	// DB 저장 
 	    	result = fileRepository.save(temp);
@@ -116,6 +138,30 @@ public class FileServiceImpl implements FileService {
             System.out.println("디렉터리 경로는 유효하지 않습니다.");
         }
         return result;
+	}
+
+
+	@Override
+	public String getFileHash() {
+		long time = System.currentTimeMillis();
+		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("YYYYMMddHHmmssSSS");
+		Date date = new Date();
+		date.setTime(time);
+		
+		return simpleDateFormat.format(date);
+	}
+
+
+	@Override
+	public Resource getImage(String dto) {
+		
+		Resource resource = null;
+		FileEntity entity = fileRepository.findByFileHash(dto);
+		if(entity != null) {
+			resource = new FileSystemResource(entity.getFileDir());
+		}
+		
+		return resource;
 	}
 
 	

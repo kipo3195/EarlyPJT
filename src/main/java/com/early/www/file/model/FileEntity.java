@@ -30,6 +30,9 @@ public class FileEntity {
 	@Column(name="file_dir")
 	private String fileDir;
 	
+	@Column(name="file_url")
+	private String fileUrl;
+	
 	@Column(name="file_uploader")
 	private String fileUploader;
 	
