@@ -27,6 +27,9 @@ public class FileEntity {
 	@Column(name="file_name")
 	private String fileName;
 	
+	@Column(name="original_file_name")
+	private String originalFileName;
+	
 	@Column(name="file_dir")
 	private String fileDir;
 	

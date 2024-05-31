@@ -1,5 +1,7 @@
 package com.early.www.file.service;
 
+import java.io.File;
+
 import org.springframework.core.io.Resource;
 
 import com.early.www.file.DTO.FileDTO;
@@ -11,6 +13,6 @@ public interface FileService {
 
 	public String getFileHash();
 
-	public Resource getImage(String fileHash);
+	public File getFile(String dto);
 
 }

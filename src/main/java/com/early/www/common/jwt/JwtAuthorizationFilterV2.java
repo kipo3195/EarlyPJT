@@ -78,7 +78,6 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 			chain.doFilter(request, response);
 			return;
 		}
-		
 		if(request.getHeader("Authorization") != null) {
 			// accessToken
 			jwtHeader = request.getHeader("Authorization");

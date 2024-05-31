@@ -6,8 +6,8 @@ import lombok.Data;
 public class CommonConst {
 	
 	public static final String PROJECT_KEYWORD ="EARLY";
-	
 	public static final String UNDER_BAR ="_";
+	public static final String DOT = ".";
 	
 	// 공통 
 	public static final String RESPONSE_TYPE = "type";
@@ -28,6 +28,8 @@ public class CommonConst {
 	public static final String FILE_SAVED = "file_saved";
 	public static final String FILE_NOT_SAVED = "file_not_saved";
 	public static final String FILE_NOT_LOADED = "file_not_loaded";
+	
+	public static final String FILE_TYPE_JPG ="jpg";
 
 
 	

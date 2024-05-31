@@ -14,10 +14,10 @@ public interface ChatMainRepository extends JpaRepository<ChatMain, Long>{
 //			+ " from ("
 //			+ " select a.*, e.name from tbl_chat_main as a join earlyuser e on a.chat_sender = e.username  where chat_room_key = :chatRoomKey and chat_type !='O' and chat_send_date < :readLineKey order by chat_seq desc limit 0, 20) as aa order by chat_seq asc")
 	
-	//20240526 채팅라인 + 사용자 + 파일
+	//20240526 채팅라인 + 사용자 + 파일 (  chatType이 I면 이미지, F면 파일, C면 일반 채팅
 	@Query(nativeQuery = true, value = "select \r\n"
 			+ "	chat_seq, \r\n"
-			+ "	case when chat_type = 'C' then chat_contents else f.file_url end chat_contents,\r\n"
+			+ "	case when chat_type = 'C' then chat_contents when chat_type = 'F' then f.original_file_name else f.file_url end chat_contents,\r\n"
 			+ "	chat_del_flag, chat_encrypt_key, chat_line_key, chat_receiver, chat_room_key,\r\n"
 			+ "	chat_sender, chat_title, chat_type, chat_send_date, chat_unread_count, chat_check_cnt, chat_good_cnt, chat_like_cnt, name as chat_sender_name \r\n"
 			+ " from (\r\n"
@@ -35,7 +35,7 @@ public interface ChatMainRepository extends JpaRepository<ChatMain, Long>{
 
 	@Query(nativeQuery = true, value="select "
 			+ "	chat_seq, "
-			+ "	case when chat_type = 'C' then chat_contents else f.file_url end chat_contents,"
+			+ "	case when chat_type = 'C' then chat_contents when chat_type = 'F' then f.original_file_name else f.file_url end chat_contents,"
 			+ "	chat_del_flag, chat_encrypt_key, chat_line_key, chat_receiver, chat_room_key,"
 			+ "	chat_sender, chat_title, chat_type, chat_send_date, chat_unread_count, chat_check_cnt, chat_good_cnt, chat_like_cnt, name as chat_sender_name "
 			+ " from ("

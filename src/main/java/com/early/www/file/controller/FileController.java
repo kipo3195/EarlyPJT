@@ -1,5 +1,6 @@
 package com.early.www.file.controller;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.HashMap;
@@ -10,12 +11,16 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.early.www.file.DTO.FileDTO;
@@ -82,35 +87,35 @@ public class FileController {
 		
 		return resultJson;
 	}
+
 	
-	@PostMapping("/imageLoad")
-	public ResponseEntity<Object> imageLoad(HttpServletRequest request, HttpServletResponse response, FileHashDTO dto) {
-		boolean errorCheck = commonRequestCheck.errorCheck(request, response, dto);
+	// produces는 response(응답)의 accept-request header 가 특정 옵션으로 반환될 것을 지정하는 옵션
+	@GetMapping(value = "/download", produces = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<Object> download(HttpServletRequest request, HttpServletResponse response, @RequestParam("fileHash") String fileHash) {
 		
+		boolean errorCheck = commonRequestCheck.errorCheck(request, response, fileHash);
 		JSONObject resultJson = new JSONObject();
-		Resource result = null;
+		
 		if(errorCheck) {
 			resultJson.put(CommonConst.RESPONSE_TYPE, CommonConst.RESPONSE_TYPE_FAIL);
 			resultJson.put(CommonConst.RESPONSE_DATA_ERROR_MSG, response.getHeader("error_code"));
-			// 에러 처리 필요. 
+			return ResponseEntity.badRequest().body(resultJson);
 		}else {
-			result = fileService.getImage(dto.getFileHash());
+			File file = fileService.getFile(fileHash);
 			
-			resultJson.put(CommonConst.RESPONSE_TYPE, CommonConst.RESPONSE_TYPE_SUCCESS);
-			resultJson.put(CommonConst.RESPONSE_DATA, result);
-			try {
-				System.out.println(result.getURI());
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			if(file != null) {
+				HttpHeaders headers = new HttpHeaders();
+				headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+				
+				//file 객체를 multipart로 전달해줄 수 있음. 
+				return new ResponseEntity<Object>(new FileSystemResource(file), headers, HttpStatus.OK);
+				
+			}else {
+				resultJson.put(CommonConst.RESPONSE_TYPE, CommonConst.RESPONSE_TYPE_FAIL);
+				resultJson.put(CommonConst.RESPONSE_DATA_ERROR_MSG, CommonConst.INVALID_BODY_DATA);
 			}
 		}
-		try {
-			return ResponseEntity.ok().contentType(MediaType.MULTIPART_FORM_DATA).body(Base64.getEncoder().encode(result.getInputStream().readAllBytes()));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-		}
-		return null;
+		return ResponseEntity.badRequest().body(resultJson);
 	}
 
 }

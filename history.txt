@@ -344,3 +344,10 @@
 2024.05.26
 	1. 이미지 미리보기 작업 
 		- 기존 설계 방식인 이미지 비동기 다운로드 요청 -> 서버의 파일 위치 url 제공 방식(채팅 라인 테이블과 파일 테이블 조인)으로 변경
+		
+2024.05.31 
+	1. 파일 다운로드 API 추가 /download
+	2. 채팅 라인 chatContents를 이미지, 파일에 따라 변경할 수 있도록 조회 쿼리 수정. 
+		- case when chat_type = 'C' then chat_contents when chat_type = 'F' then f.original_file_name else f.file_url end chat_contents 
+		
+			

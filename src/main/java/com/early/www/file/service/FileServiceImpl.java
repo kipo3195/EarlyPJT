@@ -2,11 +2,10 @@ package com.early.www.file.service;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.Blob;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
-import javax.sql.rowset.serial.SerialBlob;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
@@ -50,30 +49,55 @@ public class FileServiceImpl implements FileService {
 	    File projectDir = new File("");
 	    String projectPath = projectDir.getAbsolutePath();
 	    String yyyyMMdd = yyyymmdd();
+
+	    String commonPath = null;
+	    // 저장 경로 생성
+	    if(deploymentProperties.getType().equals("local")) {
+	    	// 로컬 일때 
+	    	commonPath = CommonConst.LOCAL_SERVER_RESOURCE_PATH;
+	    }else {
+	    	// 서버 일때 
+	    	commonPath = "";
+	    }
 	    
-	    String commonPath = CommonConst.LOCAL_SERVER_RESOURCE_PATH;
+	    StringBuffer sb = new StringBuffer();
+	    sb.append(projectPath).append(commonPath).append(yyyyMMdd);
 	    
-	    MakeString makePath = () -> projectPath + commonPath + yyyyMMdd;
+	    String makePath = sb.toString();
 	    
 	    // 날짜 경로 생성 체크
-	    boolean makeDirFlag = createDirectoryIfNotExists(makePath.execute());
+	    boolean makeDirFlag = createDirectoryIfNotExists(makePath);
 	    
 	    File tempFile = null;
 	    String newFileName = null;
+	    
 	    if(makeDirFlag) {
     	    try {
     	    	String contentType = file.getContentType();
     	    	
+    	    	MakeString makeNewFileName = null;
+    	    	
     	    	if(contentType.startsWith("image")) {
-    	    		contentType = "jpg";
+    	    		// 이미지 일때 /EARLY_20240527_hash정보.jpg
+    	    		makeNewFileName = () -> new StringBuffer()
+    	    				.append(CommonConst.PROJECT_KEYWORD)
+    	    				.append(CommonConst.UNDER_BAR)
+    	    				.append(yyyyMMdd)
+    	    				.append(CommonConst.UNDER_BAR)
+    	    				.append(dto.getFileHash())
+    	    				.append(CommonConst.DOT)
+    	    				.append(CommonConst.FILE_TYPE_JPG).toString();
+    	    	}else {
+    	    		// 파일 일때 원본파일명.확장자_hash정보
+    	    		makeNewFileName = () -> new StringBuffer()
+    	    				.append(file.getOriginalFilename())
+    	    				.append(CommonConst.UNDER_BAR)
+    	    				.append(dto.getFileHash()).toString();
     	    	}
     	    	
-    	    	MakeString makeNewFileName = () -> new StringBuffer().append(CommonConst.PROJECT_KEYWORD).append(CommonConst.UNDER_BAR)
-    	    			.append(yyyyMMdd).append(CommonConst.UNDER_BAR).append(dto.getFileHash()).toString();
+    	    	newFileName = makeNewFileName.execute();
     	    	
-    	    	newFileName = makeNewFileName.execute()+"."+contentType;
-    	    	
-    	    	tempFile = new File(makePath.execute()+"/"+newFileName);
+    	    	tempFile = new File(makePath+"/"+newFileName);
     	    	
 		    	// 파일을 주어진 목적지 파일로 이동시키는 메서드를 통해 파일 업로드.
 				file.transferTo(tempFile);
@@ -94,15 +118,21 @@ public class FileServiceImpl implements FileService {
 	    	temp.setFileSize(file.getSize());
 	    	temp.setFileUploadDate(new Date());
 	    	temp.setFileHash(dto.getFileHash());
-	    	temp.setFileDir(tempFile.getPath());
+	    	temp.setOriginalFileName(file.getOriginalFilename());
 	    	
 	    	if(deploymentProperties.getType().equals("local")){
-	    		temp.setFileUrl("http://localhost:8080/"+yyyyMMdd+"/"+newFileName);
+	    		// 채팅 라인 join시 파일, 이미지는 url데이터를 contents로 내려줌 
+	    		// 이미지는 src 속성에 그대로 사용하기 때문에 파일의 경로를,
+	    		// 파일은 contents에 파일 명을 보여줘야 하기 때문에 url에 파일 명 저장. 단, 다운로드 요청시 tbl_file_info에 매핑된 fileDir로 파일을 찾도록 처리
+    			temp.setFileDir(tempFile.getPath());
+    			temp.setFileUrl("http://localhost:8080/"+yyyyMMdd+"/"+newFileName);
 	    	}else {
 	    		// 서버 방식일때 url 변경해야함. 배포 후 정리
 	    	}
 	    	
 	    	// DB 저장 
+	    	// 이미지는 chatType이 I, chatContents은 이미지의 url
+	    	// 파일은 F. chatContents는 파일의 원본파일명
 	    	result = fileRepository.save(temp);
 	    }
 	    
@@ -153,16 +183,15 @@ public class FileServiceImpl implements FileService {
 
 
 	@Override
-	public Resource getImage(String dto) {
-		
-		Resource resource = null;
+	public File getFile(String dto) {
+		File file = null;
 		FileEntity entity = fileRepository.findByFileHash(dto);
 		if(entity != null) {
-			resource = new FileSystemResource(entity.getFileDir());
+			file = new File(entity.getFileDir());
 		}
 		
-		return resource;
-	}
+		return file;
+	} 
 
 	
 }
