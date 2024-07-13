@@ -350,4 +350,8 @@
 	2. 채팅 라인 chatContents를 이미지, 파일에 따라 변경할 수 있도록 조회 쿼리 수정. 
 		- case when chat_type = 'C' then chat_contents when chat_type = 'F' then f.original_file_name else f.file_url end chat_contents 
 		
+2024.07.13
+	1. k8s 연결 처리를 위한 application.yml 동적처리 		
+	2. redis 설정을 redis-svc로 연결 하기 위한 동적 처리 
+		
 			

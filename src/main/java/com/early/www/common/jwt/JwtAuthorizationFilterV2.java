@@ -194,7 +194,7 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 			PrincipalDetails user = (PrincipalDetails) authentication.getPrincipal();
 			username = user.getEarlyUser().getUsername();
-			log.info("[/login] user id : {} ", username);	
+			log.info("[/login] user id : {} vvv", username);	
 			request.setAttribute("username", username);
 		}else {
 			log.info("[{}] access token is invalid ! ", request.getRequestURI());

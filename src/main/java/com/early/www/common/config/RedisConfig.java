@@ -2,6 +2,7 @@ package com.early.www.common.config;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -11,13 +12,23 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import com.early.www.properties.DeploymentProperties;
 import com.early.www.properties.RedisProperties;
 
 @Configuration
 public class RedisConfig {
 	
+	@Value("${spring.redis.host}")
+	private String host;
+	
+	@Value("${spring.redis.port}")
+	private int port;
+	
 	@Autowired
 	RedisProperties redisProperties;
+	
+	@Autowired
+	DeploymentProperties deploymentProperties;
 	
     @Bean
     public RedisSerializer<Object> springSessionDefaultRedisSerializer() {
@@ -27,8 +38,13 @@ public class RedisConfig {
 
 	@Bean
 	public RedisConnectionFactory redisConnectionFactory() {
-		LettuceConnectionFactory lettuceConnectionFactory = new LettuceConnectionFactory();
-		//lettuceConnectionFactory.setPassword(redisProperties.getRedisPassword()); // 로컬 기준
+		// application.yaml 에서 설정한 host, port 사용하기 
+		LettuceConnectionFactory lettuceConnectionFactory = new LettuceConnectionFactory(host, port);
+		
+		if(deploymentProperties.getType().equals("server")) {
+			lettuceConnectionFactory.setPassword(redisProperties.getRedisPassword());
+		}else {
+		}
 		return lettuceConnectionFactory;
 	}
 	
