@@ -6,8 +6,8 @@ import org.springframework.context.annotation.Configuration;
 import lombok.Data;
 
 @Configuration
-@ConfigurationProperties(prefix = "redis")
+@ConfigurationProperties(prefix ="rabbitmq")
 @Data
-public class RedisProperties {
-	private String redisPassword;
+public class RabbitmqProperties {
+	private String queueNamingStrategy;
 }

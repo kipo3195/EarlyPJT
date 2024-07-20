@@ -353,5 +353,10 @@
 2024.07.13
 	1. k8s 연결 처리를 위한 application.yml 동적처리 		
 	2. redis 설정을 redis-svc로 연결 하기 위한 동적 처리 
+	
+2024.07.20
+	1. rabbitmq 구축
+	2. rabbitmq를 이용한 pod간 통신 처리하기 (feat. fanout Exchange + AnonymousQueue)
+
 		
 			
