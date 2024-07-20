@@ -50,14 +50,14 @@ public class RabbitmqConfig {
         return new FanoutExchange("fanout.exchange");
     }
 	
-	// 익명 Queue 생성
+	// 익명 chat Queue 생성
 	@Bean
-	public Queue queue() {
+	public Queue chatQueue() {
 		
 		NamingStrategy namingStrategy = new NamingStrategy() {
 			@Override
 			public String generateName() {
-				Base64UrlNamingStrategy strategy = new Base64UrlNamingStrategy(properties.getQueueNamingStrategy());
+				Base64UrlNamingStrategy strategy = new Base64UrlNamingStrategy(properties.getChatQueueNamingStrategy());
 				queueName = strategy.generateName();
 				return queueName;
 			}
@@ -68,8 +68,8 @@ public class RabbitmqConfig {
 	
 	// Exchange와 Queue 연결
 	@Bean
-    Binding binding(FanoutExchange fanoutExchange, Queue queue) {
-        return BindingBuilder.bind(queue).to(fanoutExchange); // fanout이라 전체에 보냄. 만약 to(DirectExchage)인 경우 with("키") 메소드 필요
+    Binding binding(FanoutExchange fanoutExchange, Queue chatQueue) {
+        return BindingBuilder.bind(chatQueue).to(fanoutExchange); // fanout이라 전체에 보냄. 만약 to(DirectExchage)인 경우 with("키") 메소드 필요
     }
 	
 	// rabbitmq와 연결을 위한 ConnectionFactory 생성

@@ -11,6 +11,10 @@ import java.util.Set;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.connection.RedisConnection;
@@ -20,12 +24,14 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import com.early.www.chat.controller.UserChatController;
 import com.early.www.chat.dto.ChatLineDTO;
 import com.early.www.chat.dto.ChatLineEventDTO;
 import com.early.www.chat.dto.ChatRoomRecvDTO;
 import com.early.www.chat.model.ChatList;
 import com.early.www.chat.model.ChatMain;
 import com.early.www.chat.model.ChatRoom;
+import com.early.www.common.config.RabbitmqConfig;
 import com.early.www.repository.ChatListRepository;
 import com.early.www.repository.ChatMainRepository;
 import com.early.www.repository.ChatRoomRepository;
@@ -35,7 +41,10 @@ import com.early.www.util.CommonConst;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class ChatServiceImpl implements ChatService {
 
 	@Autowired
@@ -50,6 +59,8 @@ public class ChatServiceImpl implements ChatService {
 	@Autowired
 	EarlyUserRepository earlyUserRepository;
 	
+	@Autowired
+	RabbitTemplate rabbitTemplate;
 	
 	@Autowired
 	RedisTemplate<String, Object> redisTemplate;
@@ -718,8 +729,78 @@ public class ChatServiceImpl implements ChatService {
 		return resultJson;
 	}
 
+	/* rabbitmq 발송 로직 */
+	@Autowired
+	RabbitmqConfig config;
+
+	@Override
+	public void sendMessageDeployment(JSONObject sendData) {
+		String queueName = config.getQueueName();
+		
+		// 수신 측에서 보낸 pod와 구분처리 하기 위한 값
+		sendData.put(CommonConst.QUEUE_NAME, queueName);
+		
+		log.info("[rabbitmq sendMessage] send data : {}", sendData.toJSONString());
+		
+		rabbitTemplate.convertAndSend("fanout.exchange", "", sendData.toJSONString());
+		
+	}
+
+
+	@Override
+	public void recvMessageDeployment(String msg, SimpMessagingTemplate simpMessagingTemplate) {
+		
+		log.info("[rabbitmq receiveMessage] recv data : {} ", msg);
 	
-	
+		if(msg != null && !msg.isEmpty()) {
+			
+			JSONParser parser = new JSONParser();
+			
+			try {
+				JSONObject recvJson = (JSONObject) parser.parse(msg);
+				
+				if(recvJson != null) {
+					String sendQueueName = (String) recvJson.get(CommonConst.QUEUE_NAME);
+					String chatRoomKey = (String) recvJson.get(CommonConst.CAHT_ROOM_KEY);
+//						String chatLineKey = (String) recvJson.get(CommonConst.CHAT_LINE_KEY);						
+//						String chatContents = (String) recvJson.get(CommonConst.CHAT_CONTENTS);
+//						String type = (String) recvJson.get(CommonConst.TYPE);
+					
+					//queuename 비교
+					String queueName = config.getQueueName();
+					if(sendQueueName != null && !sendQueueName.isEmpty()) {
+						
+						if(!sendQueueName.equals(queueName)) {
+							// 다른 pod에서 보낸 데이터
+							String dest = "/topic/room/"+chatRoomKey;
+							
+							if(recvJson.containsKey(CommonConst.QUEUE_NAME)) {
+								recvJson.remove(CommonConst.QUEUE_NAME);
+							}
+							simpMessagingTemplate.convertAndSend(dest, recvJson.toJSONString());
+							log.info("[rabbitmq receiveMessage] sending ws subscribe dest : {} end!", dest);
+							
+							
+							// TODO redis 건수 
+							
+							
+						}else {
+							// 같은 파드에서 보낸 데이터 처리하지 않음. 
+							return;
+						}
+					}
+				}
+				
+			} catch (ParseException e) {
+				log.error(e.getMessage());
+			}
+			
+		}else {
+			log.info("[rabbitmq receiveMessage] recv msg is invalid from other pods ! msg : {}", msg);
+			return;
+		}
+		
+	}
 	
 	
 

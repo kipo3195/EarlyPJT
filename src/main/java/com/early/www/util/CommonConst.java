@@ -39,5 +39,14 @@ public class CommonConst {
 	public static String ChatLineEventGood = "good";
 	public static String ChatLineEventLike = "like";
 	
+	// rabbitmq 
+	public static String QUEUE_NAME = "queue_name";
+	public static String CHAT_SENDER = "chatSender";
+	public static String CHAT_LINE_KEY = "chatLineKey";
+	public static String CAHT_ROOM_KEY = "chatRoomKey";
+	public static String CHAT_CONTENTS = "chatContents";
+	public static String TYPE = "type";
+	
+	
 
 }

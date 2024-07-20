@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 public class RabbitmqServiceImpl implements RabbitmqService {
 
 	@Autowired
-	private final RabbitTemplate rabbitTemplate;
+	RabbitTemplate rabbitTemplate;
 	
 	@Autowired
 	RabbitmqConfig config;

@@ -47,6 +47,10 @@ public interface ChatService {
 
 	public JSONObject getRecvUser(ChatRoomRecvDTO chatRoomRecvDTO);
 	
+	public void sendMessageDeployment(JSONObject sendData);
+	
+	public void recvMessageDeployment(String sendData, SimpMessagingTemplate simpMessagingTemplate);
+	
 	
 	
 	

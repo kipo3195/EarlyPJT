@@ -9,5 +9,5 @@ import lombok.Data;
 @ConfigurationProperties(prefix ="rabbitmq")
 @Data
 public class RabbitmqProperties {
-	private String queueNamingStrategy;
+	private String chatQueueNamingStrategy;
 }

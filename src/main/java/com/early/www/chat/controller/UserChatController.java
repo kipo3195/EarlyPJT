@@ -12,6 +12,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -28,6 +31,7 @@ import com.early.www.chat.dto.ChatRoomUserDTO;
 import com.early.www.chat.model.ChatMain;
 import com.early.www.chat.model.ChatRoom;
 import com.early.www.chat.service.ChatService;
+import com.early.www.common.config.RabbitmqConfig;
 import com.early.www.user.model.EarlyUser;
 import com.early.www.util.CommonConst;
 import com.early.www.util.CommonRequestCheck;
@@ -421,19 +425,27 @@ public class UserChatController {
 		// 보낼 경로 설정
 		String dest = "/topic/room/"+roomKey;
 		
-		// 발송 - chatData + 라인의 미확인 건수
-		System.out.println("채팅 발송 dest : "+dest);
+		// 발송 - chatData + 라인의 미확인 건수  TODO chatService 로직으로 ...
+		log.info("[/user/chat] dest : " + dest);
 		simpMessagingTemplate.convertAndSend(dest, sendData.toJSONString());
 		
 		/* redis 수신자 별 라인 저장 -> 수신자의 채팅방 미확인 건수 저장 -> 수신자의 전체 채팅 미확인 건수 저장 및 전체 건수 조회*/ 
 		Map<String, JSONObject> unreadMap = chatService.getUnreadChatCount(roomKey, receiver, sender, lineKey);
 		
-		// 발송 - 채팅방의 수신자의 채팅 미확인 전체 건수 & 해당 채팅방의 건수
+		// 발송 - 채팅방의 수신자의 채팅 미확인 전체 건수 & 해당 채팅방의 건수 TODO chatService 로직으로 ...
 		Iterator<String> unreadIter = unreadMap.keySet().iterator();
 		while(unreadIter.hasNext()) {
 			String recvUser = unreadIter.next();
 			simpMessagingTemplate.convertAndSend("/topic/user/"+recvUser, unreadMap.get(recvUser).toJSONString());
 		}
+		
+		/* 
+		 * 20240720 k8s 이후 버전 적용 
+		 * */
+		// 다른 pod로 데이터 전송처리
+		chatService.sendMessageDeployment(sendData);		
+		
+		
 		
 		// 20231225 이전 방식 
 		// 기존 채팅데이터를 보고 receiver를 구독하는 사용자에게 주도록 처리하던 것을 room을 구독하는 사용자에게 주도록 처리함. 
@@ -493,36 +505,44 @@ public class UserChatController {
 	
 	
 	// 방 입장, 더 불러오기 API
-		@PostMapping("/user/getRecvUser")
-		public JSONObject getRecvUser (HttpServletRequest request, @RequestBody ChatRoomRecvDTO chatRoomRecvDTO, HttpServletResponse response) {
-			JSONObject resultJson = new JSONObject();
+	@PostMapping("/user/getRecvUser")
+	public JSONObject getRecvUser (HttpServletRequest request, @RequestBody ChatRoomRecvDTO chatRoomRecvDTO, HttpServletResponse response) {
+		JSONObject resultJson = new JSONObject();
 			
-			boolean errorCheck = commonRequestCheck.errorCheck(request, response, chatRoomRecvDTO);
+		boolean errorCheck = commonRequestCheck.errorCheck(request, response, chatRoomRecvDTO);
+		
+		if(errorCheck) {
 			
-			if(errorCheck) {
-				
-				resultJson.put(CommonConst.RESPONSE_TYPE, CommonConst.RESPONSE_TYPE_FAIL);
-				resultJson.put(CommonConst.RESPONSE_DATA_ERROR_MSG, response.getHeader("error_code"));
-				
+			resultJson.put(CommonConst.RESPONSE_TYPE, CommonConst.RESPONSE_TYPE_FAIL);
+			resultJson.put(CommonConst.RESPONSE_DATA_ERROR_MSG, response.getHeader("error_code"));
+			
+		}else {
+			// 토큰에 있는 사용자 ID
+			String username = (String) request.getAttribute("username");
+			
+			if(username != null && chatRoomRecvDTO.getUserId() != null && username.equals(chatRoomRecvDTO.getUserId())) {
+				resultJson = chatService.getRecvUser(chatRoomRecvDTO);
 			}else {
-				// 토큰에 있는 사용자 ID
-				String username = (String) request.getAttribute("username");
+				JSONObject data = new JSONObject();
+				data.put(CommonConst.RESPONSE_DATA_ERROR_MSG, CommonConst.INVALID_USER_ID);
 				
-				if(username != null && chatRoomRecvDTO.getUserId() != null && username.equals(chatRoomRecvDTO.getUserId())) {
-					resultJson = chatService.getRecvUser(chatRoomRecvDTO);
-				}else {
-					JSONObject data = new JSONObject();
-					data.put(CommonConst.RESPONSE_DATA_ERROR_MSG, CommonConst.INVALID_USER_ID);
-					
-					resultJson.put("type", CommonConst.RESPONSE_TYPE_FAIL);
-					resultJson.put("data", data);
-				}
+				resultJson.put("type", CommonConst.RESPONSE_TYPE_FAIL);
+				resultJson.put("data", data);
 			}
+		}
 			log.info("[{}] response, body : {}", request.getRequestURI(), resultJson);
 			return resultJson;
-		}
+	}
+		
+	@Autowired
+	RabbitmqConfig config;
 	
-	
+	/* rabbitmq 수신 로직 */
+	@RabbitListener(queues = "#{chatQueue.name}")
+	public void receiveMessage(String msg) {
+		chatService.recvMessageDeployment(msg, simpMessagingTemplate);
+	}
+
 	
 
 }

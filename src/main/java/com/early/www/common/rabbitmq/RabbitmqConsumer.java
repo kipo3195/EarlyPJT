@@ -17,10 +17,10 @@ public class RabbitmqConsumer {
 	@Autowired
 	RabbitmqConfig config;
 
-	@RabbitListener(queues = "#{queue.name}")
-	public void receiveMessage(String msg) {
-		log.info("rabbit mq 메시지 수신 영역 ! msg : {} ", msg);
-		log.info("rabbit mq 메시지 수신 영역 ! queueName : {} ", config.getQueueName());
-	}
+//	@RabbitListener(queues = "#{queue.name}")
+//	public void receiveMessage(String msg) {
+//		log.info("rabbit mq 메시지 수신 영역 ! msg : {} ", msg);
+//		log.info("rabbit mq 메시지 수신 영역 ! queueName : {} ", config.getQueueName());
+//	}
 	
 }
