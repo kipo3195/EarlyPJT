@@ -5,6 +5,7 @@ import org.springframework.amqp.core.Base64UrlNamingStrategy;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.FanoutExchange;
+import org.springframework.amqp.core.NamingStrategy;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -33,6 +34,12 @@ public class RabbitmqConfig {
 	@Value("${spring.rabbitmq.port}")
 	private int port;
 	
+	private String queueName;
+	
+	public String getQueueName() {
+		return queueName;
+	}
+
 	// AnonymousQueue 생성시 queue naming prefix
 	@Autowired
 	RabbitmqProperties properties; 
@@ -46,7 +53,17 @@ public class RabbitmqConfig {
 	// 익명 Queue 생성
 	@Bean
 	public Queue queue() {
-		return new AnonymousQueue(new Base64UrlNamingStrategy(properties.getQueueNamingStrategy())); 
+		
+		NamingStrategy namingStrategy = new NamingStrategy() {
+			@Override
+			public String generateName() {
+				Base64UrlNamingStrategy strategy = new Base64UrlNamingStrategy(properties.getQueueNamingStrategy());
+				queueName = strategy.generateName();
+				return queueName;
+			}
+		};
+	
+		return new AnonymousQueue(namingStrategy); 
 	}
 	
 	// Exchange와 Queue 연결

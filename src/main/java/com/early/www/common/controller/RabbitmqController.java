@@ -7,10 +7,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import com.early.www.common.service.RabbitmqService;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Controller
-@Slf4j
 @RequiredArgsConstructor
 public class RabbitmqController {
 	
@@ -19,7 +17,6 @@ public class RabbitmqController {
 	@GetMapping(value= "/rabbit/test/{msg}")
 	public void testRabbit(@PathVariable String msg) {
 		
-		log.info("[RabbitmqController] rabbit mq test !!! msg : {}", msg);
 		rabbitmqService.sendMsg(msg);
 		
 	}

@@ -4,6 +4,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.early.www.common.config.RabbitmqConfig;
 import com.early.www.common.service.RabbitmqService;
 
 import lombok.RequiredArgsConstructor;
@@ -17,10 +18,14 @@ public class RabbitmqServiceImpl implements RabbitmqService {
 	@Autowired
 	private final RabbitTemplate rabbitTemplate;
 	
+	@Autowired
+	RabbitmqConfig config;
+	
 	@Override
 	public void sendMsg(String msg) {
-		log.info("rabbitmq service impl msg : {}", msg);
+		log.info("rabbitmq 발신 >>>>>>>>>>>>>>>>>  : {}", msg);
 		rabbitTemplate.convertAndSend("fanout.exchange", "" , msg);
+		log.info("rabbitmq 발신하는 pod의 queuename : {}", config.getQueueName());
 		
 	}
 

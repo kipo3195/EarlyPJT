@@ -357,6 +357,7 @@
 2024.07.20
 	1. rabbitmq 구축
 	2. rabbitmq를 이용한 pod간 통신 처리하기 (feat. fanout Exchange + AnonymousQueue)
+	3. 내 pod에서 보낸 메시지는 무시하기 (AnonymousQueue - namingStrategy)
 
 		
 			
