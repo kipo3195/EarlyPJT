@@ -45,6 +45,7 @@ public class CommonConst {
 	public static String CHAT_LINE_KEY = "chatLineKey";
 	public static String CAHT_ROOM_KEY = "chatRoomKey";
 	public static String CHAT_CONTENTS = "chatContents";
+	public static String CHAT_RECEIVER = "chatReceiver";
 	public static String TYPE = "type";
 	
 	

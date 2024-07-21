@@ -767,9 +767,9 @@ public class ChatServiceImpl implements ChatService {
 				if(recvJson != null) {
 					String sendQueueName = (String) recvJson.get(CommonConst.QUEUE_NAME);
 					String chatRoomKey = (String) recvJson.get(CommonConst.CAHT_ROOM_KEY);
-//						String chatLineKey = (String) recvJson.get(CommonConst.CHAT_LINE_KEY);						
-//						String chatContents = (String) recvJson.get(CommonConst.CHAT_CONTENTS);
-//						String type = (String) recvJson.get(CommonConst.TYPE);
+					String chatLineKey = (String) recvJson.get(CommonConst.CHAT_LINE_KEY);						
+					String chatSender = (String) recvJson.get(CommonConst.CHAT_SENDER);
+					String chatReceiver = (String) recvJson.get(CommonConst.CHAT_RECEIVER);
 					
 					//queuename 비교
 					String queueName = config.getQueueName();
@@ -783,12 +783,11 @@ public class ChatServiceImpl implements ChatService {
 								recvJson.remove(CommonConst.QUEUE_NAME);
 							}
 							simpMessagingTemplate.convertAndSend(dest, recvJson.toJSONString());
-							log.info("[rabbitmq receiveMessage] sending ws subscribe dest : {} end!", dest);
+							log.info("[rabbitmq receiveMessage] sending chatData ws subscribe dest : {} end!", dest);
 							
-							
-							// TODO redis 건수 
-							
-							
+							// redis 건수 전송
+							sendUnreadChatCount(simpMessagingTemplate, chatRoomKey, chatReceiver, chatSender, chatLineKey);
+							log.info("[rabbitmq receiveMessage] sending unreadData ws subscribe dest : {} end!", dest);
 						}else {
 							// 같은 파드에서 보낸 데이터 처리하지 않음. 
 							return;

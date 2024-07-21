@@ -424,6 +424,7 @@ public class UserChatController {
 		sendData.put("chatUnreadCount", unreadCount);
 		sendData.put("chatSenderName", senderName);
 		
+		
 		// 채팅 데이터 WS 발송 로직
 		chatService.sendMessageWs(simpMessagingTemplate, sendData, roomKey);
 		
@@ -434,6 +435,8 @@ public class UserChatController {
 		 * 20240720 k8s 이후 버전 적용 
 		 * */
 		// 다른 pod로 데이터 전송처리
+		
+		sendData.put("chatReceiver", receiver); // 수신한 pod에서 redis 건수를 처리 sendUnreadChatCount 호출하기 위함. 
 		chatService.sendMessageDeployment(sendData);		
 		
 		// 20231225 이전 방식 
@@ -529,7 +532,9 @@ public class UserChatController {
 	/* rabbitmq 수신 로직 */
 	@RabbitListener(queues = "#{chatQueue.name}")
 	public void receiveMessage(String msg) {
+		
 		chatService.recvMessageDeployment(msg, simpMessagingTemplate);
+		
 	}
 
 	

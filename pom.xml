@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.early</groupId>
 	<artifactId>early</artifactId>
-	<version>1.06</version>
+	<version>1.08</version>
 	<name>early</name>
 	<description>early project</description>
 	<packaging>jar</packaging>  <!-- 20240317 배포방식 지정 -->
@@ -34,7 +34,6 @@
 		    <groupId>org.springframework.boot</groupId>
 		    <artifactId>spring-boot-starter-websocket</artifactId>
 		</dependency>
-				
 		
 		<!-- https://mvnrepository.com/artifact/org.webjars.npm/sockjs-client -->
 		<dependency>
@@ -109,6 +108,11 @@
 		    <groupId>org.springframework.boot</groupId>
 		    <artifactId>spring-boot-starter-oauth2-client</artifactId>
 		    <version>3.2.0</version>
+		</dependency>
+		<!-- rabbitmq -->
+		<dependency>
+		  <groupId>org.springframework.boot</groupId>
+		  <artifactId>spring-boot-starter-amqp</artifactId>
 		</dependency>
 	</dependencies>
 
