@@ -25,7 +25,7 @@ public interface ChatService {
 
 	public List<ChatMain> getChatRoomLine(String chatRoomKey, String readLineKey);
 	
-	public Map<String, JSONObject> getUnreadChatCount(String roomKey, String receiver, String sender, String lineKey);
+	public void sendUnreadChatCount(SimpMessagingTemplate simpMessagingTemplate, String roomKey, String receiver, String sender, String lineKey);
 	
 	public Map<String, String> getAllUnreadCnt(String username);
 
@@ -47,9 +47,12 @@ public interface ChatService {
 
 	public JSONObject getRecvUser(ChatRoomRecvDTO chatRoomRecvDTO);
 	
+	public void sendMessageWs(SimpMessagingTemplate simpMessagingTemplate, JSONObject sendData, String roomKey);
+
 	public void sendMessageDeployment(JSONObject sendData);
 	
 	public void recvMessageDeployment(String sendData, SimpMessagingTemplate simpMessagingTemplate);
+	
 	
 	
 	

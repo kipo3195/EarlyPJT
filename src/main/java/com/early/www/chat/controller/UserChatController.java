@@ -384,20 +384,21 @@ public class UserChatController {
 	@MessageMapping("/user/chat")
 	public void handle(ChatMain main) {
 	
-		/* 데이터 검증 */
-		if(main == null 
-		   || StringUtils.isEmpty(main.getChatReceiver()) || StringUtils.isEmpty(main.getChatRoomKey()) || StringUtils.isEmpty(main.getChatSender())
-		   || StringUtils.isEmpty(main.getChatLineKey())) {
-			log.info("[/user/chat] check ChatMain : {}", main);
-			return;
-		}
 		
-		/* 검증된 데이터 */ 
-		String roomKey = main.getChatRoomKey();
 		String receiver = main.getChatReceiver();
+		String roomKey = main.getChatRoomKey();
 		String sender = main.getChatSender();
 		String data = main.getChatContents();
 		String lineKey = main.getChatLineKey();
+		String senderName = main.getChatSenderName();
+		
+		/* 데이터 검증 */
+		if(main == null 
+		   || StringUtils.isEmpty(receiver) || StringUtils.isEmpty(roomKey) || StringUtils.isEmpty(sender)
+		   || StringUtils.isEmpty(lineKey)|| StringUtils.isEmpty(senderName)) {
+			log.info("[/user/chat] ChatMain data invalid !! ChatMain is ... {} ", main);
+			return;
+		}
 		
 		/* Room의 LastLineKey update */
 		// room이 line 보다 먼저 처리 되어야 하는 이유 20240318
@@ -421,31 +422,19 @@ public class UserChatController {
 		sendData.put("chatContents", data);
 		sendData.put("chatSender", sender);
 		sendData.put("chatUnreadCount", unreadCount);
+		sendData.put("chatSenderName", senderName);
 		
-		// 보낼 경로 설정
-		String dest = "/topic/room/"+roomKey;
+		// 채팅 데이터 WS 발송 로직
+		chatService.sendMessageWs(simpMessagingTemplate, sendData, roomKey);
 		
-		// 발송 - chatData + 라인의 미확인 건수  TODO chatService 로직으로 ...
-		log.info("[/user/chat] dest : " + dest);
-		simpMessagingTemplate.convertAndSend(dest, sendData.toJSONString());
-		
-		/* redis 수신자 별 라인 저장 -> 수신자의 채팅방 미확인 건수 저장 -> 수신자의 전체 채팅 미확인 건수 저장 및 전체 건수 조회*/ 
-		Map<String, JSONObject> unreadMap = chatService.getUnreadChatCount(roomKey, receiver, sender, lineKey);
-		
-		// 발송 - 채팅방의 수신자의 채팅 미확인 전체 건수 & 해당 채팅방의 건수 TODO chatService 로직으로 ...
-		Iterator<String> unreadIter = unreadMap.keySet().iterator();
-		while(unreadIter.hasNext()) {
-			String recvUser = unreadIter.next();
-			simpMessagingTemplate.convertAndSend("/topic/user/"+recvUser, unreadMap.get(recvUser).toJSONString());
-		}
+		/* redis 수신자 별 라인 저장 -> 수신자의 채팅방 미확인 건수 저장 -> 수신자의 전체 채팅 미확인 건수 저장 및 전체 건수 조회 후 WS 발송 처리 */ 
+		chatService.sendUnreadChatCount(simpMessagingTemplate, roomKey, receiver, sender, lineKey);
 		
 		/* 
 		 * 20240720 k8s 이후 버전 적용 
 		 * */
 		// 다른 pod로 데이터 전송처리
 		chatService.sendMessageDeployment(sendData);		
-		
-		
 		
 		// 20231225 이전 방식 
 		// 기존 채팅데이터를 보고 receiver를 구독하는 사용자에게 주도록 처리하던 것을 room을 구독하는 사용자에게 주도록 처리함. 

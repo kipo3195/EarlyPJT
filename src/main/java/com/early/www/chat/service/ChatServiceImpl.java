@@ -196,7 +196,7 @@ public class ChatServiceImpl implements ChatService {
 
 	// 채팅 발송시 unreadcount 전달 
 	@Override
-	public Map<String, JSONObject> getUnreadChatCount(String roomKey, String receiver, String sender, String lineKey) {
+	public void sendUnreadChatCount(SimpMessagingTemplate simpMessagingTemplate, String roomKey, String receiver, String sender, String lineKey) {
 		
 		// 수신자 파싱
 		String[] receivers = receiver.split("[|]");
@@ -261,7 +261,12 @@ public class ChatServiceImpl implements ChatService {
 			
 		});
 		
-		return map;
+		// 발송 - 채팅방의 수신자의 채팅 미확인 전체 건수 & 해당 채팅방의 건수 TODO 비동기 로직으로 전환 
+		Iterator<String> unreadIter = map.keySet().iterator();
+		while(unreadIter.hasNext()) {
+			String recvUser = unreadIter.next();
+			simpMessagingTemplate.convertAndSend("/topic/user/"+recvUser, map.get(recvUser).toJSONString());
+		}
 		
 	}
 
@@ -799,6 +804,18 @@ public class ChatServiceImpl implements ChatService {
 			log.info("[rabbitmq receiveMessage] recv msg is invalid from other pods ! msg : {}", msg);
 			return;
 		}
+		
+	}
+
+
+	@Override
+	public void sendMessageWs(SimpMessagingTemplate simpMessagingTemplate, JSONObject sendData, String roomKey) {
+		
+		// 보낼 경로 설정
+		String dest = "/topic/room/"+roomKey;
+		
+		log.info("[sendMessageWs - chatData] dest : " + dest);
+		simpMessagingTemplate.convertAndSend(dest, sendData.toJSONString());
 		
 	}
 	

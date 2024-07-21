@@ -194,8 +194,10 @@ public class JwtAuthorizationFilterV2 extends BasicAuthenticationFilter {
 			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 			PrincipalDetails user = (PrincipalDetails) authentication.getPrincipal();
 			username = user.getEarlyUser().getUsername();
-			log.info("[/login] user id : {} vvv", username);	
+			String name = user.getEarlyUser().getName();
+			log.info("[/login] user id : {} V2", username);	
 			request.setAttribute("username", username);
+			request.setAttribute("name", name);
 		}else {
 			log.info("[{}] access token is invalid ! ", request.getRequestURI());
 			response.addHeader("error_code", "403");

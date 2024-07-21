@@ -91,12 +91,14 @@ public class CommonRestController {
 		
 		if(response.getHeader("Authorization") != null) {
 			username = (String) request.getAttribute("username");
+			String name = (String) request.getAttribute("name");
 			// 채팅, 쪽지의 미확인 건수 조회 
 			Map<String, String> allUnreadMap = chatService.getAllUnreadCnt(username);
 			
 			resultMap.put("flag", "success");
 			resultMap.put("token", response.getHeader("Authorization"));
 			resultMap.put("chat", allUnreadMap.get("chat"));
+			resultMap.put("name", name);
 			
 			//resultMap.put("msg", allUnreadMap.get("msg"));
 		}else {
