@@ -1,0 +1,369 @@
+
+	##########################################	
+	#####		  html  version			 #####
+	##########################################
+
+2023.10.17 
+	1. EarlyPJT 최초 커밋
+	
+2023.10.20 
+	1. form tag에서 post 방식으로 Controller에 전달하도록 처리
+	2. 회원가입시 비밀번호와 비밀번호 확인 입력의 정합성을 체크하는 로직 추가
+	3. controller에서 page redirect 처리 추가
+	4. jpa를 활용한 회원가입 로직 추가
+	
+2023.10.21 
+	1. ajax를 활용한 ID 중복검사 로직 추가
+		1) jquery 반영
+		2) jap의 쿼리 메소드 활용하여 select 쿼리 작성
+		3) id email 형식 정규식 검사	
+
+2023.10.22 
+	1. 로그인 로직 ajax 사용
+	2. BcryptPasswordEncoder matchers 사용
+	3. 로그인 시 인증 및 인증이 필요한 url 접근시 동작하는 필터 추가
+	
+2023.10.23 
+	1. 로그인 이후 호출 페이지 수정	
+	
+2023.10.28 
+	1. jwt 검증이 필요한 url만 jwt 인증/인가 필터를 타도록 처리
+	2. 페이지 이동의 이슈를 해결
+		1) ajax로 호출, Filter에서 jwt 검증 후 RestController에서 map return
+		2) html에서 success시 map에 어떤 데이터가 있는지에 따라 분기처리
+		3) 정상적인 요청(jwt 검증)이라면 location.href로 이동
+		4) 해당 url의 매핑 Controller가 처리	
+		
+2023.10.29 
+	1. 로그아웃 페이지 및 기능 구현
+	2. html 동작 수정
+		1) 로그인 시 로그아웃 및 사용자 메인 활성화
+		2) 메인 페이지에서 로그아웃, 사용자 메인 비활성화
+		
+2023.11.06 
+	1. CORS 필터 수정
+		1) setAllowCredentials를 true로 사용할때 addAllowedOrigin 대신 addAllowedOriginPattern를 사용하길 권장함.	
+		
+		
+	##########################################	
+	#####		  react  version		 #####
+	##########################################
+	
+2023.11.07 
+	1. React에서 /login 요청시 CORS 정책에 의해 접근이 불가능한 부분 해결
+	
+2023.11.14 
+	1. rest api 요청은 UserController로 이동함.
+	2. 회원가입시 UserController에서 넘겨받는 매개변수에 @requestbody 어노테이션 추가
+	3. 회원가입 로직 수정(username=id로 기존 가입여부 체크)	
+	
+2023.11.19 
+	1. refresh 토큰 로직 추가 작업진행중
+	
+2023.11.20 
+	1. refresh 토큰 추가작업
+		1) access token 만료시 특정 url로 호출하면 refresh token을 새로 발급
+		2) 현재 2번째 만료시 jwtToken : undefined 이슈 발생
+		
+2023.11.23
+	1. refresh 토큰 추가작업 완료
+		1) refresh 토큰 만료시 로그아웃 처리 (refresh 토큰 만료시 갱신안함)
+			 : 기존의 설계는 access token을 재발급 할때 refresh token도 갱신 처리 했는데 
+			   이렇게 되면 로그아웃 하지 않고 사용하는 사용자들이 발생할 수 있다는 생각이 들어서 주석처리함
+			   만약 refreshToken을 재발급 한다고 하더라고 해당 로직을 주석 처리하는 것이 아니라 
+			   access token의 갱신 시간이 남아 있을때 검증 후 처리하는 것이 바람직해 보임. 
+			   
+			   로그아웃 error_code정의 response.addHeader("error_code", "401");
+			   
+2023.11.25
+	1. access 토큰과 refresh 토큰관련 추가 작업
+		1) access 토큰 과 refresh 토큰이 없는 클라이언트의 요청시 403으로 response 로직 추가 
+			
+	2. JwtAuthorizationFilter 에러코드 정의  
+		1) 에러코드   
+			 /* 에러코드 정의
+			 * 
+			 * 400 access token expired
+			 * 
+			 * 401 refresh token expired 
+			 * 
+			 * 403 there isn't access token, refresh token 
+			 * 
+			 * */ 
+2023.12.03
+	1. 토큰 검증 API 추가 (/user/accessToken)	
+	
+
+2023.12.05
+	1. 토큰 검증 로직 수정 
+		: JwtAuthorizationFilter에서 refresh 토큰 만료시 header에 error_code만 담고 다음 로직(UserController)를 태우지 않는 부분 수정
+	2. 채팅 기능 추가 
+		: UserChatController 추가 (/user/chatList) 임의의 json 데이터를 생성해서 react로 response 함.
+			
+		
+2023.12.12
+	1. 채팅 관련 model 생성
+		: table 생성 
+	2. 채팅 controller, service 생성
+		
+
+2023.12.13
+	1.JWT 토큰의 username 데이터를 사용한 채팅 리스트 로직 추가 		 
+	2. Mapper를 사용하여 객체 -> String으로 변환	
+	3. JPA 
+		: 채팅 리스트 조회 쿼리 작성, @query 어노테이션, nativeQuery 속성	
+	4. 채팅 관련 model 수정
+		: table 수정
+
+2023.12.14
+	1. STOMP를 이용한 채팅 개발 진행중. 		
+
+2023.12.15
+	1. sockJS를 사용하여 리액트 연결 성공. 	
+	
+2023.12.16
+	1. 프론트에서 pub한 데이터를 채팅 객체로 받아오기 성공
+	2. 채팅 객체의 수신자 리스트를 가지고 사용자 id형식으로 구독하고 있는 사용자에게 채팅 전달하기 작업 진행중 	
+	
+2023.12.18
+	1. 프론트에서 pub한 데이터를 recvID에게 전달 완료
+		: controller에서 convertAndSend할때 url을 리액트 클라이언트의 구독 url(queue, topic)으로 수정	
+	2. 프론트에서 pub한 데이터 DB 저장완료
+		: 라인키 생성 추가
+
+2023.12.24
+	1. 웹소켓 Connect/DisConnect Listener 등록 		
+	
+2023.12.28
+	1. 채팅방 라인조회 로직 추가 (최초, react에서 스크롤을 위로 올렸을때) 	
+
+2023.12.30
+	1. SecurityContextHolder 학습과 FilterChain 학습에 대한 로직 수정
+		: SecurityContextHolder는 현재 로직에서 사용하지 않음.
+		
+2024.01.06
+	1. spring boot - redis(window) 연동
+	2. 연동 테스트 
+		: add, smember, pop		
+		
+2024.01.07
+	1. 채팅 미확인 건수 설계 
+		: 라인, 룸, 채팅 전체
+	2. 라인, 룸, 전체 저장 로직 추가 	
+
+2024.01.09
+	1. 로그인 시 미확인 채팅 건수 조회 후 전달 로직 추가
+	
+2024.01.10
+	1. 채팅 리스트 조회시 채팅방 별 미확인 건수 조회 제공
+		: 전체 리스트를 조회 후 사용자ID|roomKey 형식으로 레디스 조회, value인 미확인 건수를 chatRoom 객체에 set하는 방법으로 처리	
+		
+2024.01.15
+	1. 채팅방 입장시 라인 별 미확인 사용자 건수 조회 후 response
+	2. spring - redis pipeline 추가 		
+	3. ChatMain Entity에 미확인 건수 필드 추가
+	
+2024.01.20
+	1. 토큰 검증 프로세스를 수정하기 위한 JwtAuthorizationFilterV2 객체 생성
+	
+2024.01.21
+	1. access 검증 로직 분리를 위한 Controller 예외 처리 (username이 null이거나 error_code가 있으면 error_code를 map으로 내려주고, 아니면 비즈니스 로직 수행)
+	
+2024.01.24
+	1. 신규 채팅 생성시 미확인 건수 저장 로직 설계 수정
+		- 나의 미확인 라인 (ZSET) 
+			저장 ZADD 키워드:roomKey:ID lineKey lineKey
+			조회 ZCARD 키워드:roomKey:ID -> 나의 해당 채팅방의 미확인 건수 
+		- 나의 채팅방 미확인 건수 (HASH)
+			저장 HSET 키워드:ID roomKey '나의 해당 채팅방의 미확인 건수'
+			조회 HGETALL 키워드:ID -> iterator -> 나의 모든 채팅방의 미확인 건수
+		- 나의 채팅 전체 미확인 건수 (HASH)
+			저장 HSET 키워드:ID chat '나의 모든 채팅방의 미확인 건수'	
+		- 특정 라인의 미확인 사용자 수 (SET)
+			저장 SADD 키워드:roomKey:lineKey ID 단, 발신자 제외
+			조회 SCARD 키워드:roomKey:ID -> 해당 라인의 미확인 건수 
+			
+2024.01.25
+	1. 미확인 건수 저장 방식 변경에 따른 채팅방 리스트, 라인의 미확인 건수 조회 로직 수정
+	2. 미확인 건수 저장 방식 변경에 따른 채팅 발송시 redis 건수 전달 로직 수정
+	3. 채팅 읽음 처리 작업 진행중(나의 미확인 라인 삭제, 해당 채팅방 건수 삭제 처리)
+		 	
+2024.01.27
+	1. 라인키 발급 API 추가  
+	2. 채팅 읽음 API 작업 진행중 (ChatReadVO 생성)
+	
+2024.01.28
+	1. 채팅 읽음 API 작업 진행중 (수신 측 완료 /user/readLines)
+	
+2024.01.30
+	1. 채팅 읽음 API 작업 완료 (읽음 요청시 해당 채팅방 모든 사용자에게 해당 라인의 건수 동기화 처리 완료)	
+	
+2024.01.31
+	1. 채팅방 입장시 읽음처리 후 채팅방 모든 사용자에게 해당 라인의 건수 동기화 처리 추가	
+	
+2024.02.05
+	1. 채팅방 라인 이벤트 (like, check, good) API 추가 /user/putChatLineEvent
+		- DB방식이 아닌 redis 방식으로 처리 
+		- 사용자 별 건수 추가 SET 사용
+			추가 sadd "type:roomKey:lineKey" : 사용자ID 
+		- sadd시 return값이 0이면 취소 
+			삭제 srem "type:roomKey:lineKey" : 사용자ID 
+		- 추가 후 건수 생성
+			scard "type:roomKey:lineKey" 
+			 -> 사용자 ID의 수 반환
+		- 전체 건수 추가 hash 사용			
+			hset "allChatEvent:roomKey:lineKey" type scard한 건수		
+		- 전체 건수 조회 hgetall 
+
+		- 신규 API 개발 예정
+			조회 채팅 라인 조회시 hget(라인별 type 건수)
+		- 신규 API 개발 예정
+			 type별 사용자는 smembers type:roomKey:lineKey -> 모달창 구현 
+		 	
+2024.02.06
+	1. 채팅방 라인 이벤트 기존 라인 조회 API 수정 /user/chatRoomLineAppend, /user/chatRoomLine
+		- 이벤트 타입 redis 조회 로직 추가
+	2. 채팅방 라인 이벤트 (like, check, good) API 추가 /user/putChatLineEvent
+		- 변경된 타입만 해당 방을 구독하고 있는 채널에 pub 하는 로직 추가
+		
+2024.02.13
+	1. 채팅방 라인의 이벤트 사용자 조회 API 개발 /user/getChatLineEventUser
+		
+2024.02.18
+	1. 채팅방 입장시 라인조회 API, 라인 더 불러오기 API 쿼리 수정(sender_id -> chat_sender_name)	
+		- /user/chatRoomLine, /user/chatRoomLineAppend
+		
+2024.02.19
+	1. 채팅방 참여자 조회 API 개발 
+		- /user/getChatRoomUsers
+		- 참여자 조회 쿼리 작성 
+		
+2024.02.20
+	1. 채팅방 참여자 조회 API 수정 (/user/getChatRoomUsers)
+		- requestBody 수정 : 기존 @requestBody String chatRoomKey -> @requestBody ChatRoomUserVO chatRoomUserVO
+				-> @requestBody는 한번의 request에 하나의 Object만 받을 수 있기 때문..
+		- ChatRoomUserVO에 limitCnt를 받아서 조회 최소 기준 동적 처리 (단, 리액트에서 변수에 최소 기준을 가지고 있는 로직 필요함)		
+		
+2024.03.05
+	1. 채팅방 생성시 사용자 리스트 조회 API 생성 (/user/getCreateChatRoomUsers)
+			
+2024.03.12
+	1. 채팅방 생성 API 개발 (/user/putChatRoom)		
+		- sender, chatRoomKey, chatRoomUsers, chatRoomTitle, lastLineKey : '0', createRoomDate
+		   : tbl_chat_room 저장
+		 	 -> chatRoomUsers(참여자)는 클라이언트에서 만들어서 보내주는 대로 저장함. | 로 구분함. 
+		 	 -> chatRoomKey는 생성자 ID_생성시간
+
+2024.03.14
+	1. 채팅방 생성 API 수정
+		- tbl_chat_list 저장 추가
+		
+2024.03.15
+	1. 채팅입력시 tbl_chat_room의 last_line_key update 추가
+	2. 채팅방 생성시 서버에서 linekey를 발급하여 room의 last_line_update 로직 추가			
+	
+2024.03.18
+	1. 채팅 발송 API(웹소켓) 수정 (/user/chat)
+		- 클라이언트는 채팅 발송 이후 리스트 정보를 갱신하기 위해 다시 리스트를 조회한다. 이때 리스트 정렬 기준이 되는 last_line_key를
+		  /user/chat에서 update하는데 update하는 시점 보다 클라이언트에서 조회하는 시점이 더 빠른 케이스가 있으므로 이에 대응하기 위해 
+		  line 저장 - room 업데이트 순서를 room 업데이트 - line 저장 순서대로 수정하였다.
+		  
+2024.03.20
+	1. sl4fj를 이용한 로깅 
+		- 기존 system.out.println로그 -> slf4j 인터페이스를 이용한 logback 라이브러리 사용 로깅으로 수정 (logback-spring.xml 참조)	
+		
+2024.03.31
+	1. google OAuth2.0 로그인 작업중   
+	
+2024.04.02
+	1. resource server 호출 로직 추가
+	2. 로그인 처리를 위한 accessToken, refreshToken 발급 추가
+	3. google OAuth2.0 클라이언트별 분기처리 추가 	
+	
+2024.04.06
+	1. 구글 로그인 연동 완료 후 웹페이지 전환을 위한 redirect 처리 
+	2. redirect 이후 /login 요청시 provider값에 따른 분기처리 (기본 login은 default, 구글은 google)
+		- provider가 default가 아닌 경우(OAuth) 토큰 체크 로직 추가 
+		- 토큰의 데이터가 요청한 사용자의 ID와 동일한 경우에 로그인 처리, 다를 경우 error 	
+		
+2024.04.07
+	1. 방생성 및 참여자 조회시 사용자 조회 컬럼에 '' as provider, '' as providerId 추가
+	2. serverConfig.yml 추가 - @Configuration, @ConfigurationProperties를 활용한 OAuth2 설정 파일 객체 추가 (정리 내용은 노션 참조) 		
+	
+2024.04.14
+	1. 회원가입, 중복사용자 체크, 로그인 controller 이동
+	2. redis 설정 추가 (비밀번호)
+	3. 웹소켓 Config에 CORS 규칙 추가 *
+	
+2024.04.15
+	1. OAuth2 구글로그인 연동 운영 url에 맞게 수정	
+	
+2024.04.16
+	1. OAuth2 구글로그인 연동 redirect url에 따른 쿠키 수정
+		GoogleOauth.java 참조 
+		
+2024.04.23
+	1. EarlyUser에 userProfile 컬럼 추가 
+	2. 주소록 조회 API 생성 /address/list		
+	
+2024.04.26
+	1. 주소록 사용자 추가시 검색 API 생성 /address/searchUser
+		- 사용자 계정 & 이름 + 전화번호 검색
+		
+2024.04.27
+	1. 주소록 사용자 추가 API 생성 /address/addUser
+		- 내 id, 사용자 id 
+	2. 주소록 매핑 사용자 테이블 변경	
+	3. 주소록 이벤트 API 형식 변경 
+		- Map -> JSONObject
+		
+2024.04.29
+	1. /user/getAddrChatLine API 생성
+		- 주소록에서 채팅방 입장시 생성된 것인지 조회, 없다면 룸키만, 있다면 읽음처리 및 라인 정보 내려줌. 
+				
+2024.05.10
+	1. 채팅방 입장 API 정리 /user/getChatLines
+		- 기존 주소록 채팅입장, 채팅 리스트에서 입장, 더 불러오기 정리 
+		
+2024.05.11
+	1. controller에서 토큰 에러체크 로직 모듈화 
+		- CommonRequestCheck의 errorCheck 메소드
+	2. 채팅방 읽음처리, 리스트 조회 API 정리 
+		
+2024.05.14
+	1. 채팅방 참여자 조회 /user/getRecvUser API 생성
+				
+
+2024.05.22
+	1. 파일 업로드 API 추가 /file/upload
+	
+2024.05.24
+	1. 파일 업로드 API 수정 
+		- 이미지 서버저장 및 DB 저장처리 	
+
+2024.05.26
+	1. 이미지 미리보기 작업 
+		- 기존 설계 방식인 이미지 비동기 다운로드 요청 -> 서버의 파일 위치 url 제공 방식(채팅 라인 테이블과 파일 테이블 조인)으로 변경
+		
+2024.05.31 
+	1. 파일 다운로드 API 추가 /download
+	2. 채팅 라인 chatContents를 이미지, 파일에 따라 변경할 수 있도록 조회 쿼리 수정. 
+		- case when chat_type = 'C' then chat_contents when chat_type = 'F' then f.original_file_name else f.file_url end chat_contents 
+		
+2024.07.13
+	1. k8s 연결 처리를 위한 application.yml 동적처리 		
+	2. redis 설정을 redis-svc로 연결 하기 위한 동적 처리 
+	
+2024.07.20
+	1. rabbitmq 구축
+	2. rabbitmq를 이용한 pod간 통신 처리하기 (feat. fanout Exchange + AnonymousQueue)
+	3. 내 pod에서 보낸 메시지는 무시하기 (AnonymousQueue - namingStrategy)
+	4. 채팅 데이터 발송처리
+
+2024.07.21
+	1. 채팅방 실시간 라인에 발신자 이름 추가하여 전송 처리	
+	2. rabbitmq를 통해 다른 pod로 데이터 전송시 수신한 pod에서 내 건수 조회 후 내려주도록 처리
+	
+
+		
+			
