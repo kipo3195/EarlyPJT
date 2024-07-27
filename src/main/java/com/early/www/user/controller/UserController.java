@@ -87,6 +87,13 @@ public class UserController {
 	}
 	
 	
+	@GetMapping("/user/userinsert")
+	public void userinsert() {
+		
+		service.insertuser();
+		
+	}
+	
 	
 	// 리액트 사용안함. 20231203
 //	@GetMapping("/user/main")
@@ -116,7 +123,9 @@ public class UserController {
 //		}
 //		
 //		return resultMap;
-//	}
+//	}'
+	
+	
 
 	
 }

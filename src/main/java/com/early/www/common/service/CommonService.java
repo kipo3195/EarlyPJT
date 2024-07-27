@@ -22,4 +22,6 @@ public interface CommonService {
 	// redis 테스트 get
 	public abstract void testRedisGet(String data);
 	
+	public abstract void insertuser();
+	
 }

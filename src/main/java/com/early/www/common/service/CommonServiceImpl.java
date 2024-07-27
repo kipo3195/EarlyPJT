@@ -1,5 +1,9 @@
 package com.early.www.common.service;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,6 +132,68 @@ public class CommonServiceImpl implements CommonService {
 		long result = redisTemplate.opsForSet().size("bse3808@gmail.com|R_231212225204942");		
 		
 	}
+
+	@Override
+	public void insertuser() {
+		// 파일 읽기
+	
+		String path = "src/main/resources/templates/test.txt";
+		File file = new File(path);
+		
+		System.out.println(file.getAbsolutePath());
+		
+		if(file.exists()) {
+			System.out.println(true);
+		}
+		int readCount = 0;
+		
+		
+		String name = null;
+		BufferedReader br = null;
+		
+		try {
+			br = new BufferedReader(new FileReader(file.getAbsolutePath()));
+			while((name = br.readLine()) != null) {
+				if(!(name.trim()).isEmpty()) {
+					EarlyUser user = new EarlyUser();
+					user.setName(name);
+					String userId = makeUserId(readCount);
+					user.setUsername(userId);
+					String encodedPw = passwordEncoder.encode("1234");
+					user.setPassword(encodedPw);
+					user.setRoles("ROLE_USER");
+					
+					EarlyUser earlyUser = commonRepository.save(user);
+					readCount++;
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}catch (Exception e1) {
+			e1.printStackTrace();
+		} finally {
+			try {
+				br.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		
+	}
+
+	private String makeUserId(int count) {
+		String result = "";
+		
+		String formattedNumber = String.format("%05d", count);
+		System.out.println(formattedNumber); // 출력: "00005"
+		
+		String test = "testuser";
+		
+		result = test+formattedNumber+"@gmail.com";
+		return result;
+	}
+		
 
 
 
